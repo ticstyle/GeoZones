@@ -12,7 +12,7 @@ from homeassistant.const import ATTR_LATITUDE, ATTR_LONGITUDE, STATE_UNKNOWN
 from homeassistant.core import Event, HomeAssistant, callback
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.event import async_track_state_change_event
+from homeassistant.helpers.event import EventStateChangedData, async_track_state_change_event
 
 from .const import ATTR_CONTAINING_ZONES, CONF_SOURCE_TRACKER, DOMAIN, STORAGE_DIR
 from .utils import point_in_polygon
@@ -27,20 +27,14 @@ async def async_setup_entry(
     source_tracker = entry.data[CONF_SOURCE_TRACKER]
     entity_id_slug = source_tracker.split(".")[-1]
 
-    async_add_entities(
-        [GeoZoneTrackerEntity(hass, entry, source_tracker, entity_id_slug)], True
-    )
+    async_add_entities([GeoZoneTrackerEntity(hass, entry, source_tracker, entity_id_slug)], True)
 
 
 class GeoZoneTrackerEntity(TrackerEntity):
     """Mirror tracker representation monitoring underlying geographic region containment changes."""
 
     def __init__(
-        self,
-        hass: HomeAssistant,
-        entry: ConfigEntry,
-        source_tracker: str,
-        entity_id_slug: str,
+        self, hass: HomeAssistant, entry: ConfigEntry, source_tracker: str, entity_id_slug: str
     ) -> None:
         """Construct mirror platform wrapper state tracking layer instances."""
         self.hass = hass
@@ -54,8 +48,8 @@ class GeoZoneTrackerEntity(TrackerEntity):
 
         self._current_zone: str = STATE_UNKNOWN
         self._containing_zones: list[str] = []
-
-        # This will hold our sorted features structure directly in RAM memory
+        
+        # This holds our sorted features structure directly in RAM memory
         self._geojson_features: list[dict[str, Any]] = []
 
     def _load_features_from_disk(self) -> list[dict[str, Any]]:
@@ -75,14 +69,12 @@ class GeoZoneTrackerEntity(TrackerEntity):
 
     async def async_added_to_hass(self) -> None:
         """Configure runtime callbacks to catch data state updates from source targets."""
-
-        # Load the initial file into memory without blocking the main loop thread
-        self._geojson_features = await self.hass.async_add_executor_job(
-            self._load_features_from_disk
-        )
+        
+        # Load initial layout matrix file straight into system RAM cache arrays
+        self._geojson_features = await self.hass.async_add_executor_job(self._load_features_from_disk)
 
         @callback
-        def _async_source_changed_helper(event: Event) -> None:
+        def _async_source_changed_helper(event: Event[EventStateChangedData]) -> None:
             """Intercept coordinate shifts and compute intersection bounds instantly."""
             new_state = event.data.get("new_state")
             if new_state is None:
@@ -98,18 +90,14 @@ class GeoZoneTrackerEntity(TrackerEntity):
 
         # Listen for the nightly refresh completion to reload memory cache arrays
         async def _handle_reload_signal() -> None:
-            self._geojson_features = await self.hass.async_add_executor_job(
-                self._load_features_from_disk
-            )
+            self._geojson_features = await self.hass.async_add_executor_job(self._load_features_from_disk)
             initial_state = self.hass.states.get(self._source_tracker)
             if initial_state:
                 self._evaluate_location(initial_state)
 
         self.async_on_remove(
             async_dispatcher_connect(
-                self.hass,
-                f"{DOMAIN}_reload_{self._entry.entry_id}",
-                _handle_reload_signal,
+                self.hass, f"{DOMAIN}_reload_{self._entry.entry_id}", _handle_reload_signal
             )
         )
 
@@ -140,9 +128,7 @@ class GeoZoneTrackerEntity(TrackerEntity):
             coords = geom.get("coordinates", [])
             zone_name = props.get("name", "Unnamed Zone")
 
-            if geom_type == "Polygon" and point_in_polygon(
-                float(lon), float(lat), coords
-            ):
+            if geom_type == "Polygon" and point_in_polygon(float(lon), float(lat), coords):
                 matched_zones.append(zone_name)
 
         if matched_zones:
