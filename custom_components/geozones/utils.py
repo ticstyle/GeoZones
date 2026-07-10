@@ -4,15 +4,11 @@ import logging
 import os
 from typing import Any
 
-import aiofiles
+import aiofiles  # type: ignore[import-untyped]
 import aiohttp
 
 from homeassistant.core import HomeAssistant
-
-from .const import MAX_VERTICES, MAX_ZONES, PROPERTIES_TO_KEEP, STORAGE_DIR
-
-_LOGGER = logging.getLogger(__name__)
-
+# ... keep other imports unchanged ...
 
 async def fetch_and_process_geojson(
     hass: HomeAssistant, source: str, entity_id_slug: str
@@ -20,11 +16,12 @@ async def fetch_and_process_geojson(
     """Download or read a GeoJSON file, validate, sort, and save it locally."""
     content: str = ""
 
-    # Handle web URLs vs local files gracefully
     if source.startswith(("http://", "https://")):
         try:
             async with aiohttp.ClientSession() as session:
-                async with session.get(source, timeout=10) as response:
+                # Use a proper ClientTimeout object instead of an integer
+                timeout = aiohttp.ClientTimeout(total=10)
+                async with session.get(source, timeout=timeout) as response:
                     if response.status != 200:
                         _LOGGER.error(
                             "Failed to download GeoJSON from %s: HTTP %s",
