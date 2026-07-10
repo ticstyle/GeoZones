@@ -13,7 +13,7 @@ from homeassistant.core import Event, HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.event import async_track_state_change_event
 
-from .const import ATTR_CONTAINING_ZONES, CONF_GEOJSON_SOURCE, CONF_SOURCE_TRACKER, STORAGE_DIR
+from .const import ATTR_CONTAINING_ZONES, CONF_SOURCE_TRACKER, STORAGE_DIR
 from .utils import point_in_polygon
 
 _LOGGER = logging.getLogger(__name__)
@@ -26,14 +26,20 @@ async def async_setup_entry(
     source_tracker = entry.data[CONF_SOURCE_TRACKER]
     entity_id_slug = source_tracker.split(".")[-1]
 
-    async_add_entities([GeoZoneTrackerEntity(hass, entry, source_tracker, entity_id_slug)], True)
+    async_add_entities(
+        [GeoZoneTrackerEntity(hass, entry, source_tracker, entity_id_slug)], True
+    )
 
 
 class GeoZoneTrackerEntity(TrackerEntity):
     """Mirror tracker representation monitoring underlying geographic region containment changes."""
 
     def __init__(
-        self, hass: HomeAssistant, entry: ConfigEntry, source_tracker: str, entity_id_slug: str
+        self,
+        hass: HomeAssistant,
+        entry: ConfigEntry,
+        source_tracker: str,
+        entity_id_slug: str,
     ) -> None:
         """Construct mirror platform wrapper state tracking layer instances."""
         self.hass = hass
@@ -88,7 +94,9 @@ class GeoZoneTrackerEntity(TrackerEntity):
         )
 
         if not os.path.exists(target_path):
-            _LOGGER.warning("Expected geojson working asset structure missing at: %s", target_path)
+            _LOGGER.warning(
+                "Expected geojson working asset structure missing at: %s", target_path
+            )
             self._current_zone = STATE_UNKNOWN
             self._containing_zones = []
             self.async_write_ha_state()
@@ -113,7 +121,9 @@ class GeoZoneTrackerEntity(TrackerEntity):
             coords = geom.get("coordinates", [])
             zone_name = props.get("name", "Unnamed Zone")
 
-            if geom_type == "Polygon" and point_in_polygon(float(lon), float(lat), coords):
+            if geom_type == "Polygon" and point_in_polygon(
+                float(lon), float(lat), coords
+            ):
                 matched_zones.append(zone_name)
 
         if matched_zones:

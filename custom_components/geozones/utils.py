@@ -5,7 +5,6 @@ import os
 from typing import Any
 
 import aiofiles
-import accidents
 import aiohttp
 
 from homeassistant.core import HomeAssistant
@@ -84,7 +83,10 @@ async def fetch_and_process_geojson(
             combined_objects[name] = {
                 "type": "Feature",
                 "properties": dict(props),
-                "geometry": {"type": geom_type, "coordinates": json.loads(json.dumps(coords))},
+                "geometry": {
+                    "type": geom_type,
+                    "coordinates": json.loads(json.dumps(coords)),
+                },
             }
         else:
             existing_feature = combined_objects[name]
@@ -144,7 +146,9 @@ async def fetch_and_process_geojson(
 
         if "name" in old_props and "name" in PROPERTIES_TO_KEEP:
             clean_props["name"] = (
-                "" if str(old_props["name"]).startswith("__namnlös_") else old_props["name"]
+                ""
+                if str(old_props["name"]).startswith("__namnlös_")
+                else old_props["name"]
             )
         if "area" in old_props and "area" in PROPERTIES_TO_KEEP:
             clean_props["area"] = round(old_props["area"], 2)
