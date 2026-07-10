@@ -9,7 +9,7 @@
           "geojson_source": "GeoJSON File Source URL / Path"
         },
         "data_description": {
-          "geojson_source": "e.g., https://example.com/my_zones.geojson or /config/geozones/sweden.geojson"
+          "geojson_source": "e.g., domain.com/zones.geojson or a local path like /config/geojson_zones/zones.json"
         }
       }
     },
