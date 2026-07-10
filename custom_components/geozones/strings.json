@@ -11,6 +11,17 @@
         "data_description": {
           "geojson_source": "e.g., domain.com/zones.json or a local path like /config/geozones/sweden.geojson"
         }
+      },
+      "reconfigure": {
+        "title": "Reconfigure GeoZones Settings",
+        "description": "Update parameters or swap mapped tracking file assets for this active device tracker configuration. Standard `.geojson` or `.json` files formatted as GeoJSON are supported.",
+        "data": {
+          "source_tracker": "Target Device Tracker",
+          "geojson_source": "GeoJSON File Source URL / Path"
+        },
+        "data_description": {
+          "geojson_source": "e.g., domain.com/zones.json or a local path like /config/geozones/sweden.geojson"
+        }
       }
     },
     "error": {
