@@ -7,7 +7,11 @@ import voluptuous as vol
 
 from homeassistant import config_entries
 from homeassistant.config_entries import ConfigFlowResult
-from homeassistant.helpers import entity_registry as er
+from homeassistant.helpers.selector import (
+    EntitySelector,
+    EntitySelectorConfig,
+    TextSelector,
+)
 
 from .const import CONF_GEOJSON_SOURCE, CONF_SOURCE_TRACKER, DOMAIN
 from .utils import fetch_and_process_geojson
@@ -20,9 +24,7 @@ class GeoZonesConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     VERSION = 1
 
-    async def async_step_user(
-        self, user_input: dict[str, Any] | None = None
-    ) -> ConfigFlowResult:
+    async def async_step_user(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         """Handle initial step workflow data collection inputs."""
         errors: dict[str, str] = {}
 
@@ -53,25 +55,14 @@ class GeoZonesConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     },
                 )
 
-        # Build dynamic list containing available option trackers from existing entity registry maps
-        entity_registry = er.async_get(self.hass)
-        trackers = [
-            entity.entity_id
-            for entity in entity_registry.entities.values()
-            if entity.domain == "device_tracker"
-        ]
-
-        # Add fallback tracker entries from state space engine registry tracking records
-        state_trackers = self.hass.states.async_entity_ids("device_tracker")
-        all_trackers = sorted(list(set(trackers + state_trackers)))
-
+        # Use clean selectors without passing forbidden config dictionary elements
         data_schema = vol.Schema(
             {
-                vol.Required(CONF_SOURCE_TRACKER): vol.In(all_trackers),
-                vol.Required(CONF_GEOJSON_SOURCE): str,
+                vol.Required(CONF_SOURCE_TRACKER): EntitySelector(
+                    EntitySelectorConfig(domain="device_tracker")
+                ),
+                vol.Required(CONF_GEOJSON_SOURCE): TextSelector(),
             }
         )
 
-        return self.async_show_form(
-            step_id="user", data_schema=data_schema, errors=errors
-        )
+        return self.async_show_form(step_id="user", data_schema=data_schema, errors=errors)
