@@ -1,7 +1,7 @@
 # GeoZones
 
 <p align="center">
-  <img src="custom_components/brand/logo.png" alt="GeoZones Logo" width="800" />
+  <img src="https://github.com/ticstyle/GeoZones/blob/main/custom_components/geozones/brand/logo.png" alt="GeoZones Logo" width="800" />
 </p>
 
 ![](https://img.shields.io/github/v/release/ticstyle/GeoZones?style=for-the-badge&color=blue)
