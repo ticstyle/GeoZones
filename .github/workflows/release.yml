@@ -24,6 +24,15 @@ jobs:
           VERSION=$(jq -r '.version' custom_components/geozones/manifest.json)
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
           echo "Detected version: v$VERSION"
+          
+          # Match alpha, beta, or rc tags within the manifest string
+          if [[ "$VERSION" =~ alpha|beta|rc ]]; then
+            echo "IS_PRERELEASE=true" >> $GITHUB_OUTPUT
+            echo "Pre-release variation detected. Flagging build."
+          else
+            echo "IS_PRERELEASE=false" >> $GITHUB_OUTPUT
+            echo "Production-stable variation detected."
+          fi
 
       - name: Check if Git Tag already exists
         id: check_tag
@@ -43,4 +52,4 @@ jobs:
           name: v${{ steps.get_version.outputs.VERSION }}
           generate_release_notes: true
           draft: false
-          prerelease: false
+          prerelease: ${{ steps.get_version.outputs.IS_PRERELEASE == 'true' }}
