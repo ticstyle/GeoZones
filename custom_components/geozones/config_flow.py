@@ -25,7 +25,9 @@ class GeoZonesConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     VERSION = 1
 
-    async def async_step_user(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+    async def async_step_user(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
         """Handle initial step workflow data collection inputs."""
         errors: dict[str, str] = {}
 
@@ -63,7 +65,9 @@ class GeoZonesConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             }
         )
 
-        return self.async_show_form(step_id="user", data_schema=data_schema, errors=errors)
+        return self.async_show_form(
+            step_id="user", data_schema=data_schema, errors=errors
+        )
 
     @staticmethod
     @callback
@@ -79,7 +83,9 @@ class GeoZonesOptionsFlowHandler(config_entries.OptionsFlow):
         """Initialize configurations options workflow contexts."""
         self.config_entry = config_entry
 
-    async def async_step_init(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+    async def async_step_init(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
         """Manage option reconfiguration inputs."""
         errors: dict[str, str] = {}
 
@@ -111,12 +117,15 @@ class GeoZonesOptionsFlowHandler(config_entries.OptionsFlow):
 
         data_schema = vol.Schema(
             {
-                vol.Required(CONF_SOURCE_TRACKER, default=current_tracker): EntitySelector(
-                    EntitySelectorConfig(domain="device_tracker")
-                ),
-                vol.Required(CONF_GEOJSON_SOURCE, default=current_source): TextSelector(),
+                vol.Required(
+                    CONF_SOURCE_TRACKER, default=current_tracker
+                ): EntitySelector(EntitySelectorConfig(domain="device_tracker")),
+                vol.Required(
+                    CONF_GEOJSON_SOURCE, default=current_source
+                ): TextSelector(),
             }
         )
 
-        return self.async_show_form(step_id="init", data_schema=data_schema, errors=errors)
-        
+        return self.async_show_form(
+            step_id="init", data_schema=data_schema, errors=errors
+        )
