@@ -1,0 +1,10 @@
+{
+  "domain": "geozones",
+  "name": "GeoZones",
+  "codeowners": ["@ticstyle"],
+  "config_flow": true,
+  "documentation": "https://github.com/ticstyle/GeoZones",
+  "iot_class": "local_polling",
+  "issue_tracker": "https://github.com/ticstyle/GeoZones/issues",
+  "version": "1.0.0-beta.1"
+}
