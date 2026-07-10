@@ -182,6 +182,6 @@ class GeoZoneTrackerEntity(TrackerEntity):
         return DeviceInfo(
             identifiers={(DOMAIN, self._entry.entry_id)},
             name=self._attr_name,
-            manufacturer="GeoZones",
-            model="Spatial Tracking Engine",
+            manufacturer="ticstyle",
+            model="GeoZones",
         )
