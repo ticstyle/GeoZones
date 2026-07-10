@@ -20,7 +20,9 @@ class GeoZonesConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     VERSION = 1
 
-    async def async_step_user(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+    async def async_step_user(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
         """Handle initial step workflow data collection inputs."""
         errors: dict[str, str] = {}
 
@@ -70,4 +72,6 @@ class GeoZonesConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             }
         )
 
-        return self.async_show_form(step_id="user", data_schema=data_schema, errors=errors)
+        return self.async_show_form(
+            step_id="user", data_schema=data_schema, errors=errors
+        )
