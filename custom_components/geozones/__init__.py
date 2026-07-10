@@ -29,17 +29,19 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         geojson_source = entry.data[CONF_GEOJSON_SOURCE]
         entity_id_slug = source_tracker.split(".")[-1]
 
-        # Download and clean up the file on the disk
         path = await fetch_and_process_geojson(hass, geojson_source, entity_id_slug)
-
+        
         if path:
-            # Signal the tracker entity to reload its memory cache safely
             async_dispatcher_send(hass, f"{DOMAIN}_reload_{entry.entry_id}")
 
     unsub_timer = async_track_time_change(
         hass, nightly_refresh_callback, hour=2, minute=37, second=0
     )
-    hass.data[DOMAIN][entry.entry_id] = unsub_timer
+    
+    # Attach update listener to handle instant container reloads when options change
+    unsub_options = entry.add_update_listener(async_reload_entry)
+    
+    hass.data[DOMAIN][entry.entry_id] = (unsub_timer, unsub_options)
 
     return True
 
@@ -49,7 +51,15 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
 
     if unload_ok and entry.entry_id in hass.data[DOMAIN]:
-        unsub_timer = hass.data[DOMAIN].pop(entry.entry_id)
+        unsub_timer, unsub_options = hass.data[DOMAIN].pop(entry.entry_id)
         unsub_timer()
+        unsub_options()
 
     return unload_ok
+
+
+async def async_reload_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
+    """Force a complete thread-safe reload cycle sequence when settings are adjusted."""
+    _LOGGER.info("Reconfiguration detected. Reloading GeoZones instance")
+    await hass.config_entries.async_reload(entry.entry_id)
+    
