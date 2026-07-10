@@ -9,7 +9,7 @@
           "geojson_source": "GeoJSON File Source URL / Path"
         },
         "data_description": {
-          "geojson_source": "e.g., domain.com/zones.geojson or a local path like /config/geojson_zones/zones.json"
+          "geojson_source": "e.g., domain.com/zones.geojson or a local path like /config/geozones/sweden.geojson"
         }
       }
     },
@@ -18,6 +18,24 @@
     },
     "abort": {
       "already_configured": "This device tracker instance is already being mirrored by a GeoZones entry mapping configuration."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Reconfigure GeoZones Settings",
+        "description": "Modify parameters or switch tracking file sources for this active device tracking mirror instance.",
+        "data": {
+          "source_tracker": "Target Device Tracker",
+          "geojson_source": "GeoJSON File Source URL / Path"
+        },
+        "data_description": {
+          "geojson_source": "e.g., domain.com/zones.geojson or a local path like /config/geozones/sweden.geojson"
+        }
+      }
+    },
+    "error": {
+      "processing_failed": "The provided GeoJSON file is unreachable, structurally malformed, or breaks limits verification checks (max 2,500 zones or 250,000 vertices)."
     }
   }
 }
