@@ -10,6 +10,7 @@ from homeassistant.components.device_tracker.config_entry import TrackerEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import ATTR_LATITUDE, ATTR_LONGITUDE, STATE_UNKNOWN
 from homeassistant.core import Event, HomeAssistant, callback
+from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.event import (
@@ -174,3 +175,13 @@ class GeoZoneTrackerEntity(TrackerEntity):
     def source_type(self) -> SourceType:
         """Return the framework processing source input classification type standard."""
         return SourceType.GPS
+
+    @property
+    def device_info(self) -> DeviceInfo:
+        """Link this tracking entity to a clean, distinct parent device container block."""
+        return DeviceInfo(
+            identifiers={(DOMAIN, self._entry.entry_id)},
+            name=self._attr_name,
+            manufacturer="GeoZones",
+            model="Spatial Tracking Engine",
+        )

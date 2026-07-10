@@ -11,7 +11,6 @@ from homeassistant.helpers.selector import (
     EntitySelector,
     EntitySelectorConfig,
     TextSelector,
-    TextSelectorConfig,
 )
 
 from .const import CONF_GEOJSON_SOURCE, CONF_SOURCE_TRACKER, DOMAIN
@@ -58,17 +57,13 @@ class GeoZonesConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     },
                 )
 
-        # Use modern Home Assistant UI Selectors to create an elegant, native experience
+        # Use clean selectors without passing forbidden config dictionary elements
         data_schema = vol.Schema(
             {
                 vol.Required(CONF_SOURCE_TRACKER): EntitySelector(
                     EntitySelectorConfig(domain="device_tracker")
                 ),
-                vol.Required(CONF_GEOJSON_SOURCE): TextSelector(
-                    TextSelectorConfig(
-                        placeholder="https://example.com/my_zones.geojson"
-                    )
-                ),
+                vol.Required(CONF_GEOJSON_SOURCE): TextSelector(),
             }
         )
 

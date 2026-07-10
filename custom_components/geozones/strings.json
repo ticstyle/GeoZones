@@ -7,6 +7,9 @@
         "data": {
           "source_tracker": "Target Device Tracker",
           "geojson_source": "GeoJSON File Source URL / Path"
+        },
+        "data_description": {
+          "geojson_source": "e.g., domain.com/zones.geojson or a local path like /config/geojson_zones/zones.json"
         }
       }
     },
