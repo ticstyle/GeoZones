@@ -31,7 +31,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
         # Download and clean up the file on the disk
         path = await fetch_and_process_geojson(hass, geojson_source, entity_id_slug)
-        
+
         if path:
             # Signal the tracker entity to reload its memory cache safely
             async_dispatcher_send(hass, f"{DOMAIN}_reload_{entry.entry_id}")
