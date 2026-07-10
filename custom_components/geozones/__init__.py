@@ -6,6 +6,7 @@ import logging
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.dispatcher import async_dispatcher_send
 from homeassistant.helpers.event import async_track_time_change
 
 from .const import CONF_GEOJSON_SOURCE, CONF_SOURCE_TRACKER, DOMAIN
@@ -21,7 +22,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
-    # Register automation update cycle tracking loop engine task to target 02:37 AM execution nightly
     async def nightly_refresh_callback(now: datetime) -> None:
         """Automated scheduled update tracking execution pass handle context."""
         _LOGGER.info("Starting scheduled nightly update sweep for GeoZones structures")
@@ -29,10 +29,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         geojson_source = entry.data[CONF_GEOJSON_SOURCE]
         entity_id_slug = source_tracker.split(".")[-1]
 
-        # Overwrite file target assets natively
-        await fetch_and_process_geojson(hass, geojson_source, entity_id_slug)
+        # Download and clean up the file on the disk
+        path = await fetch_and_process_geojson(hass, geojson_source, entity_id_slug)
+        
+        if path:
+            # Signal the tracker entity to reload its memory cache safely
+            async_dispatcher_send(hass, f"{DOMAIN}_reload_{entry.entry_id}")
 
-    # Attach the timer event listener hook safely to runtime environment mapping context
     unsub_timer = async_track_time_change(
         hass, nightly_refresh_callback, hour=2, minute=37, second=0
     )
