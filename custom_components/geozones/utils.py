@@ -235,11 +235,11 @@ async def fetch_and_process_geojson(
     os.makedirs(target_dir, exist_ok=True)
     target_path = os.path.join(target_dir, f"geozones_{entity_id_slug}.json")
 
-    # Output back to formatted local JSON document structure
+    # Output back to formatted local JSON document structure asynchronously
     output_data = {**root_properties, "features": cleaned_features}
     try:
-        with open(target_path, mode="w", encoding="utf-8") as file:
-            file.write(json.dumps(output_data, ensure_ascii=False, indent=2))
+        async with aiofiles.open(target_path, mode="w", encoding="utf-8") as file:
+            await file.write(json.dumps(output_data, ensure_ascii=False, indent=2))
         return target_path
     except Exception as err:
         _LOGGER.error("Failed writing cleaned output file matrix to path: %s", err)
