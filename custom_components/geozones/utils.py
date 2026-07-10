@@ -26,10 +26,10 @@ def _calculate_polygon_area(coordinates: list[Any]) -> float:
         earth_radius = 6378137.0
         total = 0.0
         num_points = len(ring)
-        
+
         if num_points < 3:
             return 0.0
-            
+
         for i in range(num_points - 1):
             p1 = ring[i]
             p2 = ring[i + 1]
@@ -40,11 +40,11 @@ def _calculate_polygon_area(coordinates: list[Any]) -> float:
 
     # GeoJSON spec dictates coordinates[0] is always the exterior boundary ring
     outer_area = ring_area(coordinates[0])
-    
+
     # Coordinates[1:] are interior rings representing hollow holes to subtract
     for hole in coordinates[1:]:
         outer_area -= ring_area(hole)
-        
+
     return max(0.0, outer_area)
 
 
@@ -102,7 +102,7 @@ async def fetch_and_process_geojson(
     for feature in features:
         if "properties" not in feature or feature["properties"] is None:
             feature["properties"] = {}
-            
+
         props = feature["properties"]
         name = props.get("name")
         geom = feature.get("geometry", {}) or {}
@@ -117,8 +117,12 @@ async def fetch_and_process_geojson(
             elif geom_type == "MultiPolygon":
                 for poly_coords in coords:
                     calculated_area += _calculate_polygon_area(poly_coords)
-            
-            _LOGGER.debug("Generated dynamic area calculation for zone %s: %s m²", name, calculated_area)
+
+            _LOGGER.debug(
+                "Generated dynamic area calculation for zone %s: %s m²",
+                name,
+                calculated_area,
+            )
             props["area"] = calculated_area
 
         if not name or not geom:
@@ -130,7 +134,10 @@ async def fetch_and_process_geojson(
             combined_objects[name] = {
                 "type": "Feature",
                 "properties": dict(props),
-                "geometry": {"type": geom_type, "coordinates": json.loads(json.dumps(coords))},
+                "geometry": {
+                    "type": geom_type,
+                    "coordinates": json.loads(json.dumps(coords)),
+                },
             }
         else:
             existing_feature = combined_objects[name]
@@ -190,7 +197,9 @@ async def fetch_and_process_geojson(
 
         if "name" in old_props and "name" in PROPERTIES_TO_KEEP:
             clean_props["name"] = (
-                "" if str(old_props["name"]).startswith("__namnlös_") else old_props["name"]
+                ""
+                if str(old_props["name"]).startswith("__namnlös_")
+                else old_props["name"]
             )
         if "area" in old_props and "area" in PROPERTIES_TO_KEEP:
             clean_props["area"] = round(old_props["area"], 2)
@@ -263,4 +272,3 @@ def point_in_polygon(lon: float, lat: float, polygon_coordinates: list[Any]) -> 
         p1x, p1y = p2x, p2y
 
     return inside
-    
