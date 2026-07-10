@@ -1,5 +1,6 @@
-"""Utility functions for processing, sorting, and calculating GeoJSON boundaries."""
+"""Utility functions for processing, sorting, and validating GeoJSON boundaries."""
 
+import json
 import logging
 import os
 from typing import Any
@@ -8,7 +9,11 @@ import aiofiles  # type: ignore[import-untyped]
 import aiohttp
 
 from homeassistant.core import HomeAssistant
-# ... keep other imports unchanged ...
+
+from .const import MAX_VERTICES, MAX_ZONES, PROPERTIES_TO_KEEP, STORAGE_DIR
+
+_LOGGER = logging.getLogger(__name__)
+
 
 async def fetch_and_process_geojson(
     hass: HomeAssistant, source: str, entity_id_slug: str
@@ -16,10 +21,10 @@ async def fetch_and_process_geojson(
     """Download or read a GeoJSON file, validate, sort, and save it locally."""
     content: str = ""
 
+    # Handle web URLs vs local files gracefully
     if source.startswith(("http://", "https://")):
         try:
             async with aiohttp.ClientSession() as session:
-                # Use a proper ClientTimeout object instead of an integer
                 timeout = aiohttp.ClientTimeout(total=10)
                 async with session.get(source, timeout=timeout) as response:
                     if response.status != 200:
@@ -46,8 +51,6 @@ async def fetch_and_process_geojson(
             return None
 
     try:
-        import json
-
         geojson_data = json.loads(content)
     except json.JSONDecodeError as err:
         _LOGGER.error("Invalid JSON format encountered: %s", err)
@@ -80,10 +83,7 @@ async def fetch_and_process_geojson(
             combined_objects[name] = {
                 "type": "Feature",
                 "properties": dict(props),
-                "geometry": {
-                    "type": geom_type,
-                    "coordinates": json.loads(json.dumps(coords)),
-                },
+                "geometry": {"type": geom_type, "coordinates": json.loads(json.dumps(coords))},
             }
         else:
             existing_feature = combined_objects[name]
@@ -143,9 +143,7 @@ async def fetch_and_process_geojson(
 
         if "name" in old_props and "name" in PROPERTIES_TO_KEEP:
             clean_props["name"] = (
-                ""
-                if str(old_props["name"]).startswith("__namnlös_")
-                else old_props["name"]
+                "" if str(old_props["name"]).startswith("__namnlös_") else old_props["name"]
             )
         if "area" in old_props and "area" in PROPERTIES_TO_KEEP:
             clean_props["area"] = round(old_props["area"], 2)
@@ -184,8 +182,8 @@ async def fetch_and_process_geojson(
     # Output back to formatted local JSON document structure
     output_data = {**root_properties, "features": cleaned_features}
     try:
-        async with aiofiles.open(target_path, mode="w", encoding="utf-8") as file:
-            await file.write(json.dumps(output_data, ensure_ascii=False, indent=2))
+        with open(target_path, mode="w", encoding="utf-8") as file:
+            file.write(json.dumps(output_data, ensure_ascii=False, indent=2))
         return target_path
     except Exception as err:
         _LOGGER.error("Failed writing cleaned output file matrix to path: %s", err)
