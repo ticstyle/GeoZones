@@ -2,6 +2,8 @@
 
 from datetime import datetime
 import logging
+import os
+from typing import Any
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
@@ -9,11 +11,18 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.dispatcher import async_dispatcher_send
 from homeassistant.helpers.event import async_track_time_change
 
-from .const import CONF_GEOJSON_SOURCE, CONF_SOURCE_TRACKER, DOMAIN
+from .const import CONF_GEOJSON_SOURCE, CONF_SOURCE_TRACKER, DOMAIN, STORAGE_DIR
 from .utils import fetch_and_process_geojson
 
 _LOGGER = logging.getLogger(__name__)
 PLATFORMS: list[Platform] = [Platform.DEVICE_TRACKER]
+
+
+async def async_setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:
+    """Set up the GeoZones component domain and ensure storage folder exists."""
+    target_dir = hass.config.path(STORAGE_DIR)
+    await hass.async_add_executor_job(os.makedirs, target_dir, True)
+    return True
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
