@@ -16,6 +16,27 @@ from .const import MAX_VERTICES, MAX_ZONES, PROPERTIES_TO_KEEP, STORAGE_DIR
 _LOGGER = logging.getLogger(__name__)
 
 
+def get_suggested_geojson_file(hass: HomeAssistant) -> str | None:
+    """Scan storage directory for existing user-provided GeoJSON or JSON files."""
+    target_dir = hass.config.path(STORAGE_DIR)
+    os.makedirs(target_dir, exist_ok=True)
+
+    try:
+        for filename in sorted(os.listdir(target_dir)):
+            # Skip system generated output files
+            if filename.startswith("geozones_"):
+                continue
+
+            if filename.lower().endswith((".geojson", ".json")):
+                return f"/{STORAGE_DIR}/{filename}"
+    except Exception as err:
+        _LOGGER.error(
+            "Failed scanning directory %s for file suggestions: %s", target_dir, err
+        )
+
+    return None
+
+
 def _calculate_polygon_area(coordinates: list[Any]) -> float:
     """Calculate the spherical area of a polygon in square meters using ray-rings."""
     if not coordinates:
