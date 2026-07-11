@@ -68,12 +68,12 @@ Because calculated parameters are exposed cleanly to the event bus, you can easi
 type: markdown
 title: GeoZones Multi-Tracking
 content: >
-  Your current Location: **{{ states('device_tracker.geozones_stoffe_phone') }}**
+  Your current Location: **{{ states('device_tracker.geozones_phone') }}**
 
-  {% if state_attr('device_tracker.geozones_stoffe_phone', 'containing_zones')
+  {% if state_attr('device_tracker.geozones_phone', 'containing_zones')
   %}
     And here are all the zone boundaries you are inside:
-    {% for zone in state_attr('device_tracker.geozones_stoffe_phone', 'containing_zones') %}
+    {% for zone in state_attr('device_tracker.geozones_phone', 'containing_zones') %}
       - {{ zone }}
     {% endfor %}
   {% else %}
