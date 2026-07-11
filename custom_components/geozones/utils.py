@@ -72,15 +72,21 @@ async def fetch_and_process_geojson(
             _LOGGER.error("Error downloading GeoJSON file from %s: %s", source, err)
             return None
     else:
-        # Assume it is a local path file
-        if not os.path.exists(source):
-            _LOGGER.error("Local GeoJSON file path does not exist: %s", source)
+        # Resolve local paths relative to the HA config directory if needed
+        local_path = (
+            source
+            if os.path.isabs(source) and os.path.exists(source)
+            else hass.config.path(source.lstrip("/"))
+        )
+
+        if not os.path.exists(local_path):
+            _LOGGER.error("Local GeoJSON file path does not exist: %s", local_path)
             return None
         try:
-            async with aiofiles.open(source, mode="r", encoding="utf-8") as file:
+            async with aiofiles.open(local_path, mode="r", encoding="utf-8") as file:
                 content = await file.read()
         except Exception as err:
-            _LOGGER.error("Failed to read local GeoJSON file %s: %s", source, err)
+            _LOGGER.error("Failed to read local GeoJSON file %s: %s", local_path, err)
             return None
 
     try:
