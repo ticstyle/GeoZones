@@ -15,7 +15,7 @@ from homeassistant.helpers.selector import (
 )
 
 from .const import CONF_GEOJSON_SOURCE, CONF_SOURCE_TRACKER, DOMAIN
-from .utils import fetch_and_process_geojson
+from .utils import fetch_and_process_geojson, get_suggested_geojson_file
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -55,12 +55,23 @@ class GeoZonesConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     },
                 )
 
+        # Look for existing files in /config/geozones/ to pre-fill as a default suggestion
+        suggested_file = await self.hass.async_add_executor_job(
+            get_suggested_geojson_file, self.hass
+        )
+
+        source_schema = (
+            vol.Required(CONF_GEOJSON_SOURCE, default=suggested_file)
+            if suggested_file
+            else vol.Required(CONF_GEOJSON_SOURCE)
+        )
+
         data_schema = vol.Schema(
             {
                 vol.Required(CONF_SOURCE_TRACKER): EntitySelector(
                     EntitySelectorConfig(domain="device_tracker")
                 ),
-                vol.Required(CONF_GEOJSON_SOURCE): TextSelector(),
+                source_schema: TextSelector(),
             }
         )
 
@@ -115,7 +126,9 @@ class GeoZonesConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     @staticmethod
     @callback
-    def async_get_options_flow(config_entry: ConfigEntry) -> config_entries.OptionsFlow:
+    def async_get_options_flow(
+        config_entry: ConfigEntry,
+    ) -> config_entries.OptionsFlow:
         """Hook options flow framework logic handlers to the entry instances."""
         return GeoZonesOptionsFlowHandler()
 
@@ -150,7 +163,6 @@ class GeoZonesOptionsFlowHandler(config_entries.OptionsFlow):
                 )
                 return self.async_create_entry(title="", data={})
 
-        # self.config_entry is now fully inherited from parent class seamlessly
         current_tracker = self.config_entry.data.get(CONF_SOURCE_TRACKER)
         current_source = self.config_entry.data.get(CONF_GEOJSON_SOURCE)
 

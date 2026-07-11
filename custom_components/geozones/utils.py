@@ -16,6 +16,27 @@ from .const import MAX_VERTICES, MAX_ZONES, PROPERTIES_TO_KEEP, STORAGE_DIR
 _LOGGER = logging.getLogger(__name__)
 
 
+def get_suggested_geojson_file(hass: HomeAssistant) -> str | None:
+    """Scan storage directory for existing user-provided GeoJSON or JSON files."""
+    target_dir = hass.config.path(STORAGE_DIR)
+    os.makedirs(target_dir, exist_ok=True)
+
+    try:
+        for filename in sorted(os.listdir(target_dir)):
+            # Skip system generated output files
+            if filename.startswith("geozones_"):
+                continue
+
+            if filename.lower().endswith((".geojson", ".json")):
+                return f"/{STORAGE_DIR}/{filename}"
+    except Exception as err:
+        _LOGGER.error(
+            "Failed scanning directory %s for file suggestions: %s", target_dir, err
+        )
+
+    return None
+
+
 def _calculate_polygon_area(coordinates: list[Any]) -> float:
     """Calculate the spherical area of a polygon in square meters using ray-rings."""
     if not coordinates:
@@ -72,15 +93,21 @@ async def fetch_and_process_geojson(
             _LOGGER.error("Error downloading GeoJSON file from %s: %s", source, err)
             return None
     else:
-        # Assume it is a local path file
-        if not os.path.exists(source):
-            _LOGGER.error("Local GeoJSON file path does not exist: %s", source)
+        # Resolve local paths relative to the HA config directory if needed
+        local_path = (
+            source
+            if os.path.isabs(source) and os.path.exists(source)
+            else hass.config.path(source.lstrip("/"))
+        )
+
+        if not os.path.exists(local_path):
+            _LOGGER.error("Local GeoJSON file path does not exist: %s", local_path)
             return None
         try:
-            async with aiofiles.open(source, mode="r", encoding="utf-8") as file:
+            async with aiofiles.open(local_path, mode="r", encoding="utf-8") as file:
                 content = await file.read()
         except Exception as err:
-            _LOGGER.error("Failed to read local GeoJSON file %s: %s", source, err)
+            _LOGGER.error("Failed to read local GeoJSON file %s: %s", local_path, err)
             return None
 
     try:
