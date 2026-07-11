@@ -21,7 +21,12 @@ PLATFORMS: list[Platform] = [Platform.DEVICE_TRACKER]
 async def async_setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:
     """Set up the GeoZones component domain and ensure storage folder exists."""
     target_dir = hass.config.path(STORAGE_DIR)
-    await hass.async_add_executor_job(os.makedirs, target_dir, True)
+
+    def _ensure_directory() -> None:
+        """Ensure storage directory exists on disk without raising existing folder errors."""
+        os.makedirs(target_dir, exist_ok=True)
+
+    await hass.async_add_executor_job(_ensure_directory)
     return True
 
 
