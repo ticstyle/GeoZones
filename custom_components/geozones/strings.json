@@ -9,7 +9,7 @@
           "geojson_source": "GeoJSON File Source URL / Path"
         },
         "data_description": {
-          "geojson_source": "e.g., domain.com/zones.json or a local path like /config/geozones/sweden.geojson"
+          "geojson_source": "e.g., domain.com/zones.json or a local path like /geozones/sweden.geojson"
         }
       },
       "reconfigure": {
@@ -20,7 +20,7 @@
           "geojson_source": "GeoJSON File Source URL / Path"
         },
         "data_description": {
-          "geojson_source": "e.g., domain.com/zones.json or a local path like /config/geozones/sweden.geojson"
+          "geojson_source": "e.g., domain.com/zones.json or a local path like /geozones/sweden.geojson"
         }
       }
     },
@@ -41,7 +41,7 @@
           "geojson_source": "GeoJSON File Source URL / Path"
         },
         "data_description": {
-          "geojson_source": "e.g., domain.com/zones.json or a local path like /config/geozones/sweden.geojson"
+          "geojson_source": "e.g., domain.com/zones.json or a local path like /geozones/sweden.geojson"
         }
       }
     },
