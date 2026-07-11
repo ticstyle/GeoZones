@@ -66,16 +66,17 @@ Because calculated parameters are exposed cleanly to the event bus, you can easi
 
 ```yaml
 type: markdown
-title: "GeoZones Multi-Tracking"
+title: GeoZones Multi-Tracking
 content: >
-  Current Location: **{{ states('device_tracker.geozones_iphone_stoffe') }}**
+  Your current Location: **{{ states('device_tracker.geozones_stoffe_phone') }}**
 
-  ### Nesting Hierarchy :
-  {% if state_attr('device_tracker.geozones_iphone_stoffe', 'containing_zones') %}
-    Here are all the bounding boundaries you are inside:
-    {% for zone in state_attr('device_tracker.geozones_iphone_stoffe', 'containing_zones') %}
+  {% if state_attr('device_tracker.geozones_stoffe_phone', 'containing_zones')
+  %}
+    And here are all the zone boundaries you are inside:
+    {% for zone in state_attr('device_tracker.geozones_stoffe_phone', 'containing_zones') %}
       - {{ zone }}
     {% endfor %}
   {% else %}
     Currently outside known custom perimeter zones.
   {% endif %}
+
