@@ -14,7 +14,7 @@
 ![](https://img.shields.io/badge/dynamic/json?style=for-the-badge&color=41BDF5&logo=home-assistant&label=installs&url=https%3A%2F%2Fanalytics.home-assistant.io%2Fcustom_integrations.json&query=%24.geozones.total)
 ![](https://img.shields.io/github/issues/ticstyle/GeoZones?style=for-the-badge&color=orange)
 
-An asynchronous Home Assistant custom integration for advanced device tracker localization using local or remote GeoJSON layers. It cleanly processes nested, complex geometries—automatically prioritizing your smallest physical zones over larger overlapping spaces.
+An asynchronous Home Assistant custom integration for advanced device tracker localization using local or remote GeoJSON layers. It cleanly processes nested, complex geometries—automatically prioritizing your smallest physical zones over larger overlapping ones.
 
 To add this integration, please add the custom repository `https://github.com/ticstyle/GeoZones/` to HACS in your Home Assistant setup.
 
