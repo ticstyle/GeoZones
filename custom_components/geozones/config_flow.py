@@ -111,10 +111,12 @@ class GeoZonesConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         data_schema = vol.Schema(
             {
-                vol.Required(CONF_SOURCE_TRACKER, default=current_tracker): EntitySelector(
-                    EntitySelectorConfig(domain="device_tracker")
-                ),
-                vol.Required(CONF_GEOJSON_SOURCE, default=current_source): TextSelector(),
+                vol.Required(
+                    CONF_SOURCE_TRACKER, default=current_tracker
+                ): EntitySelector(EntitySelectorConfig(domain="device_tracker")),
+                vol.Required(
+                    CONF_GEOJSON_SOURCE, default=current_source
+                ): TextSelector(),
             }
         )
 
@@ -166,10 +168,12 @@ class GeoZonesOptionsFlowHandler(config_entries.OptionsFlow):
 
         data_schema = vol.Schema(
             {
-                vol.Required(CONF_SOURCE_TRACKER, default=current_tracker): EntitySelector(
-                    EntitySelectorConfig(domain="device_tracker")
-                ),
-                vol.Required(CONF_GEOJSON_SOURCE, default=current_source): TextSelector(),
+                vol.Required(
+                    CONF_SOURCE_TRACKER, default=current_tracker
+                ): EntitySelector(EntitySelectorConfig(domain="device_tracker")),
+                vol.Required(
+                    CONF_GEOJSON_SOURCE, default=current_source
+                ): TextSelector(),
             }
         )
 
