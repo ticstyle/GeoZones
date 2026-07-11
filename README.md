@@ -11,7 +11,7 @@
 [![Ruff](https://img.shields.io/github/actions/workflow/status/ticstyle/GeoZones/validate.yml?branch=main&job=ruff&label=Ruff&style=for-the-badge)](https://github.com/ticstyle/GeoZones/actions/workflows/validate.yml)
 [![Mypy](https://img.shields.io/github/actions/workflow/status/ticstyle/GeoZones/validate.yml?branch=main&job=mypy&label=Mypy&style=for-the-badge)](https://github.com/ticstyle/GeoZones/actions/workflows/validate.yml)
 ![](https://img.shields.io/github/license/ticstyle/GeoZones?style=for-the-badge)
-![](https://img.shields.io/github/downloads/ticstyle/GeoZones/total?style=for-the-badge&color=green)
+![](https://img.shields.io/badge/dynamic/json?style=for-the-badge&color=41BDF5&logo=home-assistant&label=installs&url=https%3A%2F%2Fanalytics.home-assistant.io%2Fcustom_integrations.json&query=%24.geozones.total)
 ![](https://img.shields.io/github/issues/ticstyle/GeoZones?style=for-the-badge&color=orange)
 
 An asynchronous Home Assistant custom integration for advanced device tracker localization using local or remote GeoJSON layers. It cleanly processes nested, complex geometries—automatically prioritizing your smallest physical zones over larger overlapping spaces.
