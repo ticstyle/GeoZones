@@ -66,17 +66,25 @@ Because calculated parameters are exposed cleanly to the event bus, you can easi
 
 ```yaml
 type: markdown
-title: GeoZones Multi-Tracking
-content: >
-  Your current Location: **{{ states('device_tracker.geozones_phone') }}**
-
-  {% if state_attr('device_tracker.geozones_phone', 'containing_zones')
-  %}
-    And here are all the zone boundaries you are inside:
-    {% for zone in state_attr('device_tracker.geozones_phone', 'containing_zones') %}
-      - {{ zone }}
+title: GeoZones status
+content: >-
+  {% set trackers = states.device_tracker 
+     | selectattr('entity_id', 'search', '^device_tracker\\.geozones_') 
+     | list %}
+  {% if trackers | length > 0 %}
+   ### {% for tracker in trackers %}
+      ### 📱 {{ tracker.name }}
+      * **Current Zone:** `{{ tracker.state }}`
+      * **Source Target:** `{{ state_attr(tracker.entity_id, 'source_entity_id') }}`
+      
+      **Active in these zones (from smallest to largest):**{% set zones = state_attr(tracker.entity_id, 'containing_zones') %}{% if zones and zones | length > 0 %}{% for zone in zones %}
+        - {{ zone }}{% endfor %}
+      {% else %}
+        *Not inside any custom zones at the moment.*
+      {% endif %}
+      {% if not loop.last %}---{% endif %}
     {% endfor %}
-  {% else %}
-    Currently outside known custom perimeter zones.
-  {% endif %}
+  {% else %}No active GeoZones tracker mirrors detected in the system entity
+  registry.
 
+  {% endif %}
