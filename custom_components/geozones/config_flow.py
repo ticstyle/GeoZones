@@ -46,7 +46,9 @@ class GeoZonesConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
                 if processed_path is None:
                     errors["base"] = "processing_failed"
-                    _LOGGER.warning("Could not setup entry due to data processing errors")
+                    _LOGGER.warning(
+                        "Could not setup entry due to data processing errors"
+                    )
                 else:
                     await self.async_set_unique_id(f"geozones_{entity_id_slug}")
                     self._abort_if_unique_id_configured()
