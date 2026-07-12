@@ -60,6 +60,37 @@ The generated tracker entity exposes rich metadata parameters to analyze trackin
 
 ---
 
+## 🗺️ Creating & Editing Zone Files (Recommended Tool)
+
+To visually draw, edit, or customize your geographic zones, we recommend using [Krata Maps](https://krata.app/) — a clean, free, browser-based GeoJSON editor.
+
+---
+
+### 1. Draw Your Zones in Krata
+1. Open [krata.app](https://krata.app/) in your web browser.
+2. Use the **Draw Polygon** tool to draw shapes around your desired areas (e.g., home, neighborhood, office, school).
+3. Click on each drawn shape in the left pane and give it a name:
+   *(Don't worry about calculating surface area — GeoZones automatically calculates polygon areas and orders overlapping boundaries for you!)*
+4. Click **Export** and choose **export as .geojson** to download the file (e.g., `my_zones.geojson` or `my_zones.json`).
+
+---
+
+### 2. Save the File to Home Assistant
+Upload your exported file into your Home Assistant `/config/geozones/` directory using your preferred method:
+* **File Editor Add-on:** Navigate to `geozones/` and click **Upload File**.
+* **Studio Code Server / VS Code:** Drag and drop the file into the `geozones/` folder.
+* **Samba Share / SSH:** Copy the file into `/config/geozones/`.
+
+> 💡 **Tip:** If the `geozones` folder doesn't exist yet, simply installing the GeoZones integration creates it automatically!
+
+---
+
+### 3. Connect the File in GeoZones
+1. In Home Assistant, go to **Settings** $\rightarrow$ **Devices & Services** $\rightarrow$ **Add Integration** $\rightarrow$ **GeoZones**.
+2. GeoZones will automatically detect your file inside `/config/geozones/` and pre-fill the path for you in the setup window!
+
+---
+
 ## 💡 Lovelace Dashboard Example
 
 Because calculated parameters are exposed cleanly to the event bus, you can easily design contextual dashboards using native Markdown tools without complicated layout configurations.
