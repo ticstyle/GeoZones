@@ -51,9 +51,9 @@ class GeoZoneTrackerEntity(TrackerEntity):
         self._source_tracker = source_tracker
         self._entity_id_slug = entity_id_slug
 
-        self.entity_id = f"device_tracker.geozones_{entity_id_slug}"
         self._attr_name = f"GeoZones {entity_id_slug}"
         self._attr_unique_id = f"geozones_{entity_id_slug}"
+        self._attr_suggested_object_id = f"geozones_{entity_id_slug}"
 
         self._current_zone: str = STATE_UNKNOWN
         self._containing_zones: list[str] = []
