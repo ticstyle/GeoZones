@@ -16,10 +16,11 @@ from .const import MAX_VERTICES, MAX_ZONES, PROPERTIES_TO_KEEP, STORAGE_DIR
 _LOGGER = logging.getLogger(__name__)
 
 
-def get_suggested_geojson_file(hass: HomeAssistant) -> str | None:
-    """Scan storage directory for existing user-provided GeoJSON or JSON files."""
+def get_all_geojson_files(hass: HomeAssistant) -> list[str]:
+    """Scan storage directory and return all user-provided GeoJSON or JSON files."""
     target_dir = hass.config.path(STORAGE_DIR)
     os.makedirs(target_dir, exist_ok=True)
+    found_files: list[str] = []
 
     try:
         for filename in sorted(os.listdir(target_dir)):
@@ -28,13 +29,13 @@ def get_suggested_geojson_file(hass: HomeAssistant) -> str | None:
                 continue
 
             if filename.lower().endswith((".geojson", ".json")):
-                return f"/{STORAGE_DIR}/{filename}"
+                found_files.append(f"/{STORAGE_DIR}/{filename}")
     except Exception as err:
         _LOGGER.error(
-            "Failed scanning directory %s for file suggestions: %s", target_dir, err
+            "Failed scanning directory %s for file assets list: %s", target_dir, err
         )
 
-    return None
+    return found_files
 
 
 def _calculate_polygon_area(coordinates: list[Any]) -> float:
@@ -99,6 +100,14 @@ async def fetch_and_process_geojson(
             if os.path.isabs(source) and os.path.exists(source)
             else hass.config.path(source.lstrip("/"))
         )
+
+        # Prevent mapping an internal system-generated output file artifact as a new source file
+        if os.path.basename(local_path).startswith("geozones_"):
+            _LOGGER.error(
+                "Rejected attempt to loop an internal system-generated output file as source: %s",
+                local_path,
+            )
+            return None
 
         if not os.path.exists(local_path):
             _LOGGER.error("Local GeoJSON file path does not exist: %s", local_path)
@@ -299,3 +308,4 @@ def point_in_polygon(lon: float, lat: float, polygon_coordinates: list[Any]) -> 
         p1x, p1y = p2x, p2y
 
     return inside
+    
