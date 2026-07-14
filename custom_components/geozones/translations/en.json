@@ -3,7 +3,7 @@
     "step": {
       "user": {
         "title": "Configure GeoZones Mirror",
-        "description": "Set up a high-performance geometric tracker mirror. This integration maps your custom device telemetry coordinates against a GeoJSON file (standard `.geojson` or `.json` files formatted as GeoJSON work perfectly), automatically prioritizing overlapping boundaries by the smallest surface area footprint.\n\nYou can input a web URL endpoint or use a local file path relative to your Home Assistant installation root directory.",
+        "description": "Set up a high-performance geometric tracker mirror. This integration maps your custom device telemetry coordinates against a GeoJSON file (standard `.geojson` or `.json` files formatted as GeoJSON work perfectly), automatically prioritizing overlapping boundaries by the smallest surface area footprint.\n\n**Detected local files in /geozones/:**{local_files}\n\nYou can input a web URL endpoint or use a local file path relative to your Home Assistant installation root directory.",
         "data": {
           "source_tracker": "Target Device Tracker",
           "geojson_source": "GeoJSON File Source URL / Path"
@@ -14,7 +14,7 @@
       },
       "reconfigure": {
         "title": "Reconfigure GeoZones Settings",
-        "description": "Update parameters or swap mapped tracking file assets for this active device tracker configuration. Standard `.geojson` or `.json` files formatted as GeoJSON are supported.",
+        "description": "Update parameters or swap mapped tracking file assets for this active device tracker configuration. Standard `.geojson` or `.json` files formatted as GeoJSON are supported.\n\n**Detected local files in /geozones/:**{local_files}",
         "data": {
           "source_tracker": "Target Device Tracker",
           "geojson_source": "GeoJSON File Source URL / Path"
@@ -25,7 +25,8 @@
       }
     },
     "error": {
-      "processing_failed": "The provided GeoJSON file is unreachable, structurally malformed, or breaks limits verification checks (max 2,500 zones or 250,000 vertices)."
+      "processing_failed": "The provided GeoJSON file is unreachable, structurally malformed, or breaks limits verification checks (max 2,500 zones or 250,000 vertices).",
+      "system_file_forbidden": "You cannot use an internal system-generated file (starting with 'geozones_') as a source configuration asset."
     },
     "abort": {
       "already_configured": "This device tracker instance is already being mirrored by a GeoZones entry mapping configuration."
@@ -35,7 +36,7 @@
     "step": {
       "init": {
         "title": "Reconfigure GeoZones Settings",
-        "description": "Modify parameters or switch tracking file sources for this active device tracking mirror instance. Standard `.geojson` or `.json` files formatted as GeoJSON are supported.",
+        "description": "Modify parameters or switch tracking file sources for this active device tracking mirror instance. Standard `.geojson` or `.json` files formatted as GeoJSON are supported.\n\n**Detected local files in /geozones/:**{local_files}",
         "data": {
           "source_tracker": "Target Device Tracker",
           "geojson_source": "GeoJSON File Source URL / Path"
@@ -46,7 +47,8 @@
       }
     },
     "error": {
-      "processing_failed": "The provided GeoJSON file is unreachable, structurally malformed, or breaks limits verification checks (max 2,500 zones or 250,000 vertices)."
+      "processing_failed": "The provided GeoJSON file is unreachable, structurally malformed, or breaks limits verification checks (max 2,500 zones or 250,000 vertices).",
+      "system_file_forbidden": "You cannot use an internal system-generated file (starting with 'geozones_') as a source configuration asset."
     }
   }
 }

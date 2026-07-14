@@ -1,6 +1,7 @@
 """Config flow framework implementation details for GeoZones handling setups."""
 
 import logging
+import os
 from typing import Any
 
 import voluptuous as vol
@@ -15,7 +16,7 @@ from homeassistant.helpers.selector import (
 )
 
 from .const import CONF_GEOJSON_SOURCE, CONF_SOURCE_TRACKER, DOMAIN
-from .utils import fetch_and_process_geojson, get_suggested_geojson_file
+from .utils import fetch_and_process_geojson, get_all_geojson_files
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -36,29 +37,41 @@ class GeoZonesConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             geojson_source = user_input[CONF_GEOJSON_SOURCE]
             entity_id_slug = source_tracker.split(".")[-1]
 
-            processed_path = await fetch_and_process_geojson(
-                self.hass, geojson_source, entity_id_slug
-            )
-
-            if processed_path is None:
-                errors["base"] = "processing_failed"
-                _LOGGER.warning("Could not setup entry due to data processing errors")
+            if os.path.basename(geojson_source).startswith("geozones_"):
+                errors["base"] = "system_file_forbidden"
             else:
-                await self.async_set_unique_id(f"geozones_{entity_id_slug}")
-                self._abort_if_unique_id_configured()
-
-                return self.async_create_entry(
-                    title=f"GeoZones {entity_id_slug}",
-                    data={
-                        CONF_SOURCE_TRACKER: source_tracker,
-                        CONF_GEOJSON_SOURCE: geojson_source,
-                    },
+                processed_path = await fetch_and_process_geojson(
+                    self.hass, geojson_source, entity_id_slug
                 )
 
-        # Look for existing files in /config/geozones/ to pre-fill as a default suggestion
-        suggested_file = await self.hass.async_add_executor_job(
-            get_suggested_geojson_file, self.hass
+                if processed_path is None:
+                    errors["base"] = "processing_failed"
+                    _LOGGER.warning(
+                        "Could not setup entry due to data processing errors"
+                    )
+                else:
+                    await self.async_set_unique_id(f"geozones_{entity_id_slug}")
+                    self._abort_if_unique_id_configured()
+
+                    return self.async_create_entry(
+                        title=f"GeoZones {entity_id_slug}",
+                        data={
+                            CONF_SOURCE_TRACKER: source_tracker,
+                            CONF_GEOJSON_SOURCE: geojson_source,
+                        },
+                    )
+
+        # Retrieve list of all available files in directory path
+        local_files = await self.hass.async_add_executor_job(
+            get_all_geojson_files, self.hass
         )
+
+        if local_files:
+            files_text = "\n" + "\n".join([f"- {f}" for f in local_files])
+            suggested_file = local_files[0]
+        else:
+            files_text = "\n\n*(No local files discovered in folder configuration)*"
+            suggested_file = None
 
         source_schema = (
             vol.Required(CONF_GEOJSON_SOURCE, default=suggested_file)
@@ -76,7 +89,10 @@ class GeoZonesConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         )
 
         return self.async_show_form(
-            step_id="user", data_schema=data_schema, errors=errors
+            step_id="user",
+            data_schema=data_schema,
+            errors=errors,
+            description_placeholders={"local_files": files_text},
         )
 
     async def async_step_reconfigure(
@@ -91,20 +107,32 @@ class GeoZonesConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             geojson_source = user_input[CONF_GEOJSON_SOURCE]
             entity_id_slug = source_tracker.split(".")[-1]
 
-            processed_path = await fetch_and_process_geojson(
-                self.hass, geojson_source, entity_id_slug
-            )
-
-            if processed_path is None:
-                errors["base"] = "processing_failed"
+            if os.path.basename(geojson_source).startswith("geozones_"):
+                errors["base"] = "system_file_forbidden"
             else:
-                return self.async_update_reload_and_abort(
-                    config_entry,
-                    data_updates={
-                        CONF_SOURCE_TRACKER: source_tracker,
-                        CONF_GEOJSON_SOURCE: geojson_source,
-                    },
+                processed_path = await fetch_and_process_geojson(
+                    self.hass, geojson_source, entity_id_slug
                 )
+
+                if processed_path is None:
+                    errors["base"] = "processing_failed"
+                else:
+                    return self.async_update_reload_and_abort(
+                        config_entry,
+                        data_updates={
+                            CONF_SOURCE_TRACKER: source_tracker,
+                            CONF_GEOJSON_SOURCE: geojson_source,
+                        },
+                    )
+
+        local_files = await self.hass.async_add_executor_job(
+            get_all_geojson_files, self.hass
+        )
+        files_text = (
+            "\n" + "\n".join([f"- {f}" for f in local_files])
+            if local_files
+            else "\n\n*(No local files discovered in folder configuration)*"
+        )
 
         current_tracker = config_entry.data.get(CONF_SOURCE_TRACKER)
         current_source = config_entry.data.get(CONF_GEOJSON_SOURCE)
@@ -121,7 +149,10 @@ class GeoZonesConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         )
 
         return self.async_show_form(
-            step_id="reconfigure", data_schema=data_schema, errors=errors
+            step_id="reconfigure",
+            data_schema=data_schema,
+            errors=errors,
+            description_placeholders={"local_files": files_text},
         )
 
     @staticmethod
@@ -147,21 +178,33 @@ class GeoZonesOptionsFlowHandler(config_entries.OptionsFlow):
             geojson_source = user_input[CONF_GEOJSON_SOURCE]
             entity_id_slug = source_tracker.split(".")[-1]
 
-            processed_path = await fetch_and_process_geojson(
-                self.hass, geojson_source, entity_id_slug
-            )
-
-            if processed_path is None:
-                errors["base"] = "processing_failed"
+            if os.path.basename(geojson_source).startswith("geozones_"):
+                errors["base"] = "system_file_forbidden"
             else:
-                self.hass.config_entries.async_update_entry(
-                    self.config_entry,
-                    data={
-                        CONF_SOURCE_TRACKER: source_tracker,
-                        CONF_GEOJSON_SOURCE: geojson_source,
-                    },
+                processed_path = await fetch_and_process_geojson(
+                    self.hass, geojson_source, entity_id_slug
                 )
-                return self.async_create_entry(title="", data={})
+
+                if processed_path is None:
+                    errors["base"] = "processing_failed"
+                else:
+                    self.hass.config_entries.async_update_entry(
+                        self.config_entry,
+                        data={
+                            CONF_SOURCE_TRACKER: source_tracker,
+                            CONF_GEOJSON_SOURCE: geojson_source,
+                        },
+                    )
+                    return self.async_create_entry(title="", data={})
+
+        local_files = await self.hass.async_add_executor_job(
+            get_all_geojson_files, self.hass
+        )
+        files_text = (
+            "\n" + "\n".join([f"- {f}" for f in local_files])
+            if local_files
+            else "\n\n*(No local files discovered in folder configuration)*"
+        )
 
         current_tracker = self.config_entry.data.get(CONF_SOURCE_TRACKER)
         current_source = self.config_entry.data.get(CONF_GEOJSON_SOURCE)
@@ -178,5 +221,8 @@ class GeoZonesOptionsFlowHandler(config_entries.OptionsFlow):
         )
 
         return self.async_show_form(
-            step_id="init", data_schema=data_schema, errors=errors
+            step_id="init",
+            data_schema=data_schema,
+            errors=errors,
+            description_placeholders={"local_files": files_text},
         )
