@@ -308,4 +308,3 @@ def point_in_polygon(lon: float, lat: float, polygon_coordinates: list[Any]) -> 
         p1x, p1y = p2x, p2y
 
     return inside
-    
