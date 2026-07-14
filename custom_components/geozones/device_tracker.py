@@ -189,4 +189,3 @@ class GeoZoneTrackerEntity(TrackerEntity):
             manufacturer="ticstyle",
             model="GeoZones",
         )
-        
