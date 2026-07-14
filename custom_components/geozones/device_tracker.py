@@ -163,6 +163,11 @@ class GeoZoneTrackerEntity(TrackerEntity):
         return self._current_zone
 
     @property
+    def in_zones(self) -> list[str]:
+        """Return the custom geo-spatial zones the entity is currently matching within."""
+        return self._containing_zones
+
+    @property
     def extra_state_attributes(self) -> dict[str, Any]:
         """Expose calculated nested array layouts safely to environment parameters."""
         return {
@@ -184,3 +189,4 @@ class GeoZoneTrackerEntity(TrackerEntity):
             manufacturer="ticstyle",
             model="GeoZones",
         )
+        
