@@ -47,4 +47,3 @@ async def async_get_config_entry_diagnostics(
     }
 
     return diagnostics_data
-  
