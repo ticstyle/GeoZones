@@ -26,12 +26,12 @@ from homeassistant.helpers.restore_state import RestoreEntity
 from .const import (
     ATTR_CONTAINING_ZONES,
     CONF_HOME_SSIDS,
-    CONF_HOME_ZONE,
     CONF_MAX_GPS_ACCURACY,
     CONF_SOURCE_TRACKER,
     CONF_WIFI_SSID_SENSOR,
     DOMAIN,
     STORAGE_DIR,
+    DEFAULT_HOME_ZONE,
 )
 from .utils import point_in_polygon
 
@@ -77,7 +77,7 @@ class GeoZoneTrackerEntity(TrackerEntity, RestoreEntity):
         self._max_gps_accuracy: int = entry.data.get(CONF_MAX_GPS_ACCURACY, 50)
         self._wifi_ssid_sensor: str | None = entry.data.get(CONF_WIFI_SSID_SENSOR)
         self._home_ssids: list[str] = entry.data.get(CONF_HOME_SSIDS, [])
-        self._home_zone_entity_id: str = entry.data.get(CONF_HOME_ZONE, "zone.home")
+        self._home_zone_entity_id: str = DEFAULT_HOME_ZONE
 
         # This holds our sorted features structure directly in RAM memory
         self._geojson_features: list[dict[str, Any]] = []
