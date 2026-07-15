@@ -6,5 +6,5 @@
   "documentation": "https://github.com/ticstyle/GeoZones",
   "iot_class": "local_polling",
   "issue_tracker": "https://github.com/ticstyle/GeoZones/issues",
-  "version": "1.2.0"
+  "version": "1.2.0-beta.1"
 }
