@@ -21,9 +21,7 @@ from homeassistant.helpers.event import (
     EventStateChangedData,
     async_track_state_change_event,
 )
-from homeassistant.helpers.restore_state import (
-    RestoreEntity,
-)  # Added for state recovery
+from homeassistant.helpers.restore_state import RestoreEntity
 
 from .const import (
     ATTR_CONTAINING_ZONES,
@@ -119,9 +117,7 @@ class GeoZoneTrackerEntity(TrackerEntity, RestoreEntity):
         # Restore previous state if it exists to prevent startup "unknown" states
         if last_state := await self.async_get_last_state():
             self._current_zone = last_state.state
-            self._containing_zones = last_state.attributes.get(
-                ATTR_CONTAINING_ZONES, []
-            )
+            self._containing_zones = last_state.attributes.get(ATTR_CONTAINING_ZONES, [])
 
         entities_to_track = [self._source_tracker]
         if self._wifi_ssid_sensor:
@@ -195,11 +191,11 @@ class GeoZoneTrackerEntity(TrackerEntity, RestoreEntity):
         lat = source_state.attributes.get(ATTR_LATITUDE)
         lon = source_state.attributes.get(ATTR_LONGITUDE)
 
+        # If coordinates are missing, we preserve our restored state rather than wiping it.
         if lat is None or lon is None:
-            # Only set to unknown if we don't have coordinates and no wifi active
-            self._current_zone = STATE_UNKNOWN
-            self._containing_zones = []
-            self.async_write_ha_state()
+            if self._current_zone == STATE_UNKNOWN:
+                self._containing_zones = []
+                self.async_write_ha_state()
             return
 
         # Step 2: Validate GPS accuracy threshold is within acceptable bounds
