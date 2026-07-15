@@ -181,6 +181,8 @@ jobs:
         with:
           tag_name: v${{ steps.get_version.outputs.VERSION }}
           name: v${{ steps.get_version.outputs.VERSION }}
+          target_commitish: ${{ github.sha }}  # 🎯 Pin the tag/release to the exact commit SHA that triggered this run
           generate_release_notes: true
           draft: false
           prerelease: ${{ steps.get_version.outputs.IS_PRERELEASE == 'true' }}
+          
