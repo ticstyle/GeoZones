@@ -56,14 +56,35 @@ class GeoZonesConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         all_sensors = self.hass.states.async_entity_ids("sensor")
 
-        # Priority 1: Direct match containing full slug and wifi
-        for entity_id in all_sensors:
-            if tracker_slug in entity_id and "wifi" in entity_id:
+        # Exclude BSSID/MAC sensors to prevent matching the wrong hardware details
+        candidate_sensors = [s for s in all_sensors if "bssid" not in s]
+
+        # Priority 1: Direct match containing full slug and strong keywords (connection, ssid)
+        for entity_id in candidate_sensors:
+            if tracker_slug in entity_id and any(
+                kw in entity_id for kw in ("connection", "ssid")
+            ):
                 return entity_id
 
-        # Priority 2: Match containing base slug and wifi
-        for entity_id in all_sensors:
-            if base_slug in entity_id and "wifi" in entity_id:
+        # Priority 2: Direct match containing base slug and strong keywords (connection, ssid)
+        for entity_id in candidate_sensors:
+            if base_slug in entity_id and any(
+                kw in entity_id for kw in ("connection", "ssid")
+            ):
+                return entity_id
+
+        # Priority 3: Fall back to full slug and general wifi keywords
+        for entity_id in candidate_sensors:
+            if tracker_slug in entity_id and any(
+                kw in entity_id for kw in ("wifi", "wi_fi")
+            ):
+                return entity_id
+
+        # Priority 4: Fall back to base slug and general wifi keywords
+        for entity_id in candidate_sensors:
+            if base_slug in entity_id and any(
+                kw in entity_id for kw in ("wifi", "wi_fi")
+            ):
                 return entity_id
 
         return None
@@ -340,14 +361,35 @@ class GeoZonesOptionsFlowHandler(config_entries.OptionsFlow):
 
         all_sensors = self.hass.states.async_entity_ids("sensor")
 
-        # Priority 1: Direct match containing full slug and wifi
-        for entity_id in all_sensors:
-            if tracker_slug in entity_id and "wifi" in entity_id:
+        # Exclude BSSID/MAC sensors to prevent matching the wrong hardware details
+        candidate_sensors = [s for s in all_sensors if "bssid" not in s]
+
+        # Priority 1: Direct match containing full slug and strong keywords (connection, ssid)
+        for entity_id in candidate_sensors:
+            if tracker_slug in entity_id and any(
+                kw in entity_id for kw in ("connection", "ssid")
+            ):
                 return entity_id
 
-        # Priority 2: Match containing base slug and wifi
-        for entity_id in all_sensors:
-            if base_slug in entity_id and "wifi" in entity_id:
+        # Priority 2: Direct match containing base slug and strong keywords (connection, ssid)
+        for entity_id in candidate_sensors:
+            if base_slug in entity_id and any(
+                kw in entity_id for kw in ("connection", "ssid")
+            ):
+                return entity_id
+
+        # Priority 3: Fall back to full slug and general wifi keywords
+        for entity_id in candidate_sensors:
+            if tracker_slug in entity_id and any(
+                kw in entity_id for kw in ("wifi", "wi_fi")
+            ):
+                return entity_id
+
+        # Priority 4: Fall back to base slug and general wifi keywords
+        for entity_id in candidate_sensors:
+            if base_slug in entity_id and any(
+                kw in entity_id for kw in ("wifi", "wi_fi")
+            ):
                 return entity_id
 
         return None
@@ -421,7 +463,7 @@ class GeoZonesOptionsFlowHandler(config_entries.OptionsFlow):
             current_tracker
         )
 
-        if suggested_wifi:
+        if @suggested_wifi:
             schema_dict[vol.Optional(CONF_WIFI_SSID_SENSOR, default=suggested_wifi)] = (
                 EntitySelector(EntitySelectorConfig(domain="sensor"))
             )
@@ -450,3 +492,4 @@ class GeoZonesOptionsFlowHandler(config_entries.OptionsFlow):
             errors=errors,
             description_placeholders={"local_files": files_text},
         )
+        
