@@ -53,7 +53,7 @@ jobs:
       - name: Commit & Push changes if needed
         uses: stefanzweifel/git-auto-commit-action@v7
         with:
-          commit_message: "chore: sync translations and auto-format with Ruff [skip ci]"
+          commit_message: "chore: sync translations and auto-format with Ruff"  # Removed [skip ci] to allow checks to report status
           file_pattern: "custom_components/geozones/translations/en.json custom_components/geozones/**"
 
   # ==========================================
