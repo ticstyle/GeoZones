@@ -239,6 +239,7 @@ class GeoZoneTrackerEntity(TrackerEntity):
         return {
             ATTR_CONTAINING_ZONES: self._containing_zones,
             "source_entity_id": self._source_tracker,
+            "max_gps_accuracy": self._max_gps_accuracy,
         }
 
     @property
