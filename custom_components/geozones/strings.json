@@ -3,7 +3,7 @@
     "step": {
       "user": {
         "title": "Configure GeoZones Mirror",
-        "description": "Set up a high-performance geometric tracker mirror. This integration maps your custom device telemetry coordinates against a GeoJSON file (standard `.geojson` or `.json` files formatted as GeoJSON work perfectly), automatically prioritizing overlapping boundaries by the smallest surface area footprint.\n\n**Detected local files in /geozones/:**{local_files}\n\nYou can input a web URL endpoint or use a local file path relative to your Home Assistant installation root directory.",
+        "description": "Set up a high-performance geometric tracker mirror. This integration maps your custom device telemetry coordinates against a GeoJSON file (standard `.geojson` or `.json` files formatted as GeoJSON work perfectly), automatically prioritizing overlapping boundaries by the smallest surface area footprint.\n\n**Detected local files in /config/geozones/:**{local_files}\n\nYou can input a web URL endpoint or use a local file path relative to your Home Assistant installation config directory.",
         "data": {
           "source_tracker": "Target Device Tracker",
           "geojson_source": "GeoJSON File Source URL / Path"
@@ -12,15 +12,39 @@
           "geojson_source": "e.g., domain.com/zones.json or a local path like /geozones/sweden.geojson"
         }
       },
-      "reconfigure": {
-        "title": "Reconfigure GeoZones Settings",
-        "description": "Update parameters or swap mapped tracking file assets for this active device tracker configuration. Standard `.geojson` or `.json` files formatted as GeoJSON are supported.\n\n**Detected local files in /geozones/:**{local_files}",
+      "advanced": {
+        "title": "Configure Advanced Tracking Settings",
+        "description": "Configure safety filters and Wi-Fi presence anchoring to prevent GPS drift. We have automatically analyzed your selected target device and pre-selected the matching Wi-Fi sensor if one was found.",
         "data": {
-          "source_tracker": "Target Device Tracker",
-          "geojson_source": "GeoJSON File Source URL / Path"
+          "max_gps_accuracy": "Maximum GPS Accuracy (meters)",
+          "wifi_ssid_sensor": "Wi-Fi SSID Sensor (Optional)",
+          "home_ssids": "Home Wi-Fi SSIDs (Optional)",
+          "home_zone": "Home Zone Entity (Optional)"
         },
         "data_description": {
-          "geojson_source": "e.g., domain.com/zones.json or a local path like /geozones/sweden.geojson"
+          "max_gps_accuracy": "Location updates with accuracy worse than this threshold will be filtered out to prevent GPS drift. (default is 50 meters)",
+          "wifi_ssid_sensor": "Select your mobile companion app's Wi-Fi connection sensor.",
+          "home_ssids": "Add your home Wi-Fi networks. Connecting to any of these will instantly anchor your state to your chosen Home Zone.",
+          "home_zone": "The zone to anchor to when connected to any of the specified home Wi-Fi networks."
+        }
+      },
+      "reconfigure": {
+        "title": "Reconfigure GeoZones Settings",
+        "description": "Update parameters or swap mapped tracking file assets for this active device tracker configuration. Standard `.geojson` or `.json` files formatted as GeoJSON are supported.\n\n**Detected local files in /config/geozones/:**{local_files}",
+        "data": {
+          "source_tracker": "Target Device Tracker",
+          "geojson_source": "GeoJSON File Source URL / Path",
+          "max_gps_accuracy": "Maximum GPS Accuracy (meters)",
+          "wifi_ssid_sensor": "Wi-Fi SSID Sensor (Optional)",
+          "home_ssids": "Home Wi-Fi SSIDs (Optional)",
+          "home_zone": "Home Zone Entity (Optional)"
+        },
+        "data_description": {
+          "geojson_source": "e.g., domain.com/zones.json or a local path like /geozones/sweden.geojson",
+          "max_gps_accuracy": "Location updates with accuracy worse than this threshold will be filtered out to prevent GPS drift. (default is 50 meters)",
+          "wifi_ssid_sensor": "Select your mobile companion app's Wi-Fi connection sensor.",
+          "home_ssids": "Add your home Wi-Fi networks. Connecting to any of these will instantly anchor your state to your chosen Home Zone.",
+          "home_zone": "The zone to anchor to when connected to any of the specified home Wi-Fi networks."
         }
       }
     },
@@ -39,10 +63,18 @@
         "description": "Modify parameters or switch tracking file sources for this active device tracking mirror instance. Standard `.geojson` or `.json` files formatted as GeoJSON are supported.\n\n**Detected local files in /geozones/:**{local_files}",
         "data": {
           "source_tracker": "Target Device Tracker",
-          "geojson_source": "GeoJSON File Source URL / Path"
+          "geojson_source": "GeoJSON File Source URL / Path",
+          "max_gps_accuracy": "Maximum GPS Accuracy (meters)",
+          "wifi_ssid_sensor": "Wi-Fi SSID Sensor (Optional)",
+          "home_ssids": "Home Wi-Fi SSIDs (Optional)",
+          "home_zone": "Home Zone Entity (Optional)"
         },
         "data_description": {
-          "geojson_source": "e.g., domain.com/zones.json or a local path like /geozones/sweden.geojson"
+          "geojson_source": "e.g., domain.com/zones.json or a local path like /geozones/sweden.geojson",
+          "max_gps_accuracy": "Location updates with accuracy worse than this threshold will be filtered out to prevent GPS drift. (default is 50 meters)",
+          "wifi_ssid_sensor": "Select your mobile companion app's Wi-Fi connection sensor.",
+          "home_ssids": "Add your home Wi-Fi networks. Connecting to any of these will instantly anchor your state to your chosen Home Zone.",
+          "home_zone": "The zone to anchor to when connected to any of the specified home Wi-Fi networks."
         }
       }
     },
