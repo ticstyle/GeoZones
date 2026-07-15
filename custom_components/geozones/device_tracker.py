@@ -117,7 +117,9 @@ class GeoZoneTrackerEntity(TrackerEntity, RestoreEntity):
         # Restore previous state if it exists to prevent startup "unknown" states
         if last_state := await self.async_get_last_state():
             self._current_zone = last_state.state
-            self._containing_zones = last_state.attributes.get(ATTR_CONTAINING_ZONES, [])
+            self._containing_zones = last_state.attributes.get(
+                ATTR_CONTAINING_ZONES, []
+            )
 
         entities_to_track = [self._source_tracker]
         if self._wifi_ssid_sensor:
