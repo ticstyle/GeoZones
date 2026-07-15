@@ -26,8 +26,6 @@ jobs:
   sync_and_format:
     name: Sync Translations & Format Code
     runs-on: ubuntu-latest
-    # Skip if this is a PR and the source branch is dev or main (to prevent duplicates)
-    if: github.event_name != 'pull_request' || (github.head_ref != 'dev' && github.head_ref != 'main')
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v7
@@ -53,7 +51,7 @@ jobs:
       - name: Commit & Push changes if needed
         uses: stefanzweifel/git-auto-commit-action@v7
         with:
-          commit_message: "chore: sync translations and auto-format with Ruff"  # Removed [skip ci] to allow checks to report status
+          commit_message: "chore: sync translations and auto-format with Ruff"
           file_pattern: "custom_components/geozones/translations/en.json custom_components/geozones/**"
 
   # ==========================================
@@ -63,8 +61,6 @@ jobs:
     name: Run Hassfest
     needs: sync_and_format
     runs-on: ubuntu-latest
-    # Skip if this is a PR and the source branch is dev or main (to prevent duplicates)
-    if: github.event_name != 'pull_request' || (github.head_ref != 'dev' && github.head_ref != 'main')
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
@@ -78,8 +74,6 @@ jobs:
     name: Run HACS Check
     needs: sync_and_format
     runs-on: ubuntu-latest
-    # Skip if this is a PR and the source branch is dev or main (to prevent duplicates)
-    if: github.event_name != 'pull_request' || (github.head_ref != 'dev' && github.head_ref != 'main')
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
@@ -95,8 +89,6 @@ jobs:
     name: Type Checking
     needs: sync_and_format
     runs-on: ubuntu-latest
-    # Skip if this is a PR and the source branch is dev or main (to prevent duplicates)
-    if: github.event_name != 'pull_request' || (github.head_ref != 'dev' && github.head_ref != 'main')
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
