@@ -21,6 +21,7 @@ from homeassistant.helpers.event import (
     EventStateChangedData,
     async_track_state_change_event,
 )
+from homeassistant.helpers.restore_state import RestoreEntity  # Added for state recovery
 
 from .const import (
     ATTR_CONTAINING_ZONES,
@@ -49,7 +50,7 @@ async def async_setup_entry(
     )
 
 
-class GeoZoneTrackerEntity(TrackerEntity):
+class GeoZoneTrackerEntity(TrackerEntity, RestoreEntity):
     """Mirror tracker representation monitoring underlying geographic region containment changes."""
 
     def __init__(
@@ -106,11 +107,17 @@ class GeoZoneTrackerEntity(TrackerEntity):
 
     async def async_added_to_hass(self) -> None:
         """Configure runtime callbacks to catch data state updates from source targets."""
+        await super().async_added_to_hass()
 
         # Load initial layout matrix file straight into system RAM cache arrays
         self._geojson_features = await self.hass.async_add_executor_job(
             self._load_features_from_disk
         )
+
+        # Restore previous state if it exists to prevent startup "unknown" states
+        if last_state := await self.async_get_last_state():
+            self._current_zone = last_state.state
+            self._containing_zones = last_state.attributes.get(ATTR_CONTAINING_ZONES, [])
 
         entities_to_track = [self._source_tracker]
         if self._wifi_ssid_sensor:
@@ -173,16 +180,19 @@ class GeoZoneTrackerEntity(TrackerEntity):
                 self.async_write_ha_state()
                 return
 
-        if source_state is None:
-            self._current_zone = STATE_UNKNOWN
-            self._containing_zones = []
-            self.async_write_ha_state()
+        # If the source tracker is offline or temporarily unavailable,
+        # we preserve our restored state rather than wiping it to STATE_UNKNOWN.
+        if source_state is None or source_state.state in (STATE_UNKNOWN, "unavailable"):
+            if self._current_zone == STATE_UNKNOWN:
+                self._containing_zones = []
+                self.async_write_ha_state()
             return
 
         lat = source_state.attributes.get(ATTR_LATITUDE)
         lon = source_state.attributes.get(ATTR_LONGITUDE)
 
         if lat is None or lon is None:
+            # Only set to unknown if we don't have coordinates and no wifi active
             self._current_zone = STATE_UNKNOWN
             self._containing_zones = []
             self.async_write_ha_state()
