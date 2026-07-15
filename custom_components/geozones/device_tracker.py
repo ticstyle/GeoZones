@@ -83,12 +83,35 @@ class GeoZoneTrackerEntity(TrackerEntity, RestoreEntity):
         self._geojson_features: list[dict[str, Any]] = []
 
     def _get_home_zone_name(self) -> str:
-        """Retrieve the friendly name of the configured home zone entity."""
+        """Retrieve the home zone name dynamically matching the GeoJSON layer covering home coordinates."""
         zone_state = self.hass.states.get(self._home_zone_entity_id)
-        if zone_state:
-            return zone_state.name
-        # Fall back to structured formatting of the object ID if state isn't loaded yet
-        return self._home_zone_entity_id.split(".")[-1].replace("_", " ").title()
+        default_name = (
+            zone_state.name
+            if zone_state
+            else self._home_zone_entity_id.split(".")[-1].replace("_", " ").title()
+        )
+
+        if not zone_state:
+            return default_name
+
+        # Extract the physical coordinates mapped to your Home Assistant zone setup
+        home_lat = zone_state.attributes.get("latitude")
+        home_lon = zone_state.attributes.get("longitude")
+
+        if home_lat is not None and home_lon is not None:
+            # Check which custom drawn shape physically envelopes your home coordinates
+            for feature in self._geojson_features:
+                geom = feature.get("geometry", {}) or {}
+                props = feature.get("properties", {}) or {}
+                geom_type = geom.get("type")
+                coords = geom.get("coordinates", [])
+                zone_name = props.get("name")
+
+                if zone_name and geom_type == "Polygon":
+                    if point_in_polygon(float(home_lon), float(home_lat), coords):
+                        return str(zone_name)
+
+        return default_name
 
     def _load_features_from_disk(self) -> list[dict[str, Any]]:
         """Read and parse the file structure inside an executor thread context."""
