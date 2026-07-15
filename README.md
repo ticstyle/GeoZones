@@ -6,10 +6,10 @@
 
 ![](https://img.shields.io/github/v/release/ticstyle/GeoZones?style=for-the-badge&color=blue)
 ![](https://img.shields.io/badge/Home%20Assistant-Custom%20Integration-blue?style=for-the-badge&logo=home-assistant)
-[![Hassfest](https://img.shields.io/github/actions/workflow/status/ticstyle/GeoZones/validate.yml?branch=main&job=hassfest&label=Hassfest&style=for-the-badge)](https://github.com/ticstyle/GeoZones/actions/workflows/validate.yml)
-[![HACS Validation](https://img.shields.io/github/actions/workflow/status/ticstyle/GeoZones/validate.yml?branch=main&job=hacs&label=HACS&style=for-the-badge)](https://github.com/ticstyle/GeoZones/actions/workflows/validate.yml)
-[![Ruff](https://img.shields.io/github/actions/workflow/status/ticstyle/GeoZones/validate.yml?branch=main&job=ruff&label=Ruff&style=for-the-badge)](https://github.com/ticstyle/GeoZones/actions/workflows/validate.yml)
-[![Mypy](https://img.shields.io/github/actions/workflow/status/ticstyle/GeoZones/validate.yml?branch=main&job=mypy&label=Mypy&style=for-the-badge)](https://github.com/ticstyle/GeoZones/actions/workflows/validate.yml)
+[![Hassfest](https://img.shields.io/github/actions/workflow/status/ticstyle/GeoZones/pipeline.yml?branch=main&job=hassfest&label=Hassfest&style=for-the-badge)](https://github.com/ticstyle/GeoZones/actions/workflows/pipeline.yml)
+[![HACS Validation](https://img.shields.io/github/actions/workflow/status/ticstyle/GeoZones/pipeline.yml?branch=main&job=hacs&label=HACS&style=for-the-badge)](https://github.com/ticstyle/GeoZones/actions/workflows/pipeline.yml)
+[![Ruff / Format](https://img.shields.io/github/actions/workflow/status/ticstyle/GeoZones/pipeline.yml?branch=main&job=sync_and_format&label=Ruff%20%2F%20Format&style=for-the-badge)](https://github.com/ticstyle/GeoZones/actions/workflows/pipeline.yml)
+[![Mypy](https://img.shields.io/github/actions/workflow/status/ticstyle/GeoZones/pipeline.yml?branch=main&job=mypy&label=Mypy&style=for-the-badge)](https://github.com/ticstyle/GeoZones/actions/workflows/pipeline.yml)
 ![](https://img.shields.io/github/license/ticstyle/GeoZones?style=for-the-badge)
 ![](https://img.shields.io/badge/dynamic/json?style=for-the-badge&color=41BDF5&logo=home-assistant&label=installs&url=https%3A%2F%2Fanalytics.home-assistant.io%2Fcustom_integrations.json&query=%24.geozones.total)
 ![](https://img.shields.io/github/issues/ticstyle/GeoZones?style=for-the-badge&color=orange)
@@ -23,6 +23,8 @@ This integration is written and maintained exclusively in **English**. All entit
 
 ## ✨ Features
 * **Smallest-Area Priority Hierarchy:** Automatically parses your GeoJSON data, exploding any complex `MultiPolygon` arrays into clean individual polygons. It then automatically sorts them from smallest to largest area, ensuring that nested sub-zones (like a small store inside a large shopping district) match first.
+* **Smart Wi-Fi SSID Localizing:** Pairs with your device's native companion app network sensor. It features an intelligent keyword matching algorithm that automatically ignores hardware BSSID/MAC addresses, isolates your true network SSID, and binds your tracking state instantly to home when connected to a designated Wi-Fi network.
+* **GPS Jitter & Accuracy Filtering:** Configure a customized maximum GPS accuracy threshold (defaults to 50 meters) to ignore sloppy coordinate drift, preventing false-positive zone updates during weak signal telemetry events.
 * **In-Memory RAM Caching:** Files are read into memory exactly once at startup or after update sequences. This prevents slow disk I/O reads or loop bottlenecks during high-frequency real-time GPS coordinate telemetry updates.
 * **Nightly Auto-Sync Sweeps:** Every night at exactly **02:37 AM**, the integration wakes up to redownload, validate, and resort all mapped GeoJSON configurations, ensuring your local spatial assets stay up to date.
 * **Strict Validation Guardrails:** Protects your core engine loops by scanning structural constraints. If a processed workspace target exceeds **2,500 individual zones** or **250,000 vertices**, the layout drops safely and flags error reports into your system logs.
@@ -37,11 +39,15 @@ Via [HACS](https://hacs.xyz/) or manually copy the `geozones` folder from the [l
 
 [![](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=geozones)
 
-Add the integration via the Home Assistant User Interface. The configuration step can be run multiple times to spin up separate mirrored entity layers for different tracking devices.
+Add and adjust the integration via the Home Assistant User Interface. The setup step can be run multiple times to spin up separate mirrored entity layers for different tracking devices, and existing entries can be fully tweaked on the fly using the native **Reconfigure** and **Options** flow.
 
-During setup, you will be prompted to provide:
+During setup or reconfiguration, you will be prompted to provide:
 1. **Source Device Tracker:** An existing `device_tracker` entity from your registry map records.
 2. **GeoJSON Source:** A web URL destination path link (starting with `http://` or `https://`) or a direct path location pointing to a local file asset.
+3. **Max GPS Accuracy:** High-frequency GPS telemetry filter distance threshold in meters (default: `50`).
+4. **Wi-Fi SSID Sensor (Optional):** The parent sensor tracking your device's connected SSID (automatically matched during setup).
+5. **Home SSIDs (Optional):** A customizable list of network names that designate your Home wireless network profile.
+6. **Home Zone (Optional):** The target zone representing your primary residence (default: `zone.home`).
 
 ---
 
@@ -50,7 +56,7 @@ When parsing your selected source tracker (e.g., `device_tracker.iphone_stoffe`)
 
 | Entity ID | Name in UI | State Example | Description |
 | :--- | :--- | :--- | :--- |
-| `device_tracker.geozones_iphone_stoffe` | GeoZones iphone_stoffe | `Coffee Shop` | The current matching zone name, prioritizing the smallest area structure. Returns `not_home` when outside polygon footprints. |
+| `device_tracker.geozones_my_phone` | GeoZones my_phone | `Coffee Shop` | The current matching zone name, prioritizing the smallest area structure. Returns `not_home` when outside polygon footprints. |
 
 ### Entity Attributes
 The generated tracker entity exposes rich metadata parameters to analyze tracking boundaries:
@@ -86,7 +92,7 @@ Upload your exported file into your Home Assistant `/config/geozones/` directory
 ---
 
 ### 3. Connect the File in GeoZones
-1. In Home Assistant, go to **Settings** $\rightarrow$ **Devices & Services** $\rightarrow$ **Add Integration** $\rightarrow$ **GeoZones**.
+1. In Home Assistant, go to **Settings** ➔ **Devices & Services** ➔ **Add Integration** ➔ **GeoZones**.
 2. GeoZones will automatically detect your file inside `/config/geozones/` and pre-fill the path for you in the setup window!
 
 ---
@@ -119,3 +125,4 @@ content: >-
   registry.
 
   {% endif %}
+```
