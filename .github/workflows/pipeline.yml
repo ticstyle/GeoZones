@@ -4,11 +4,11 @@ on:
   push:
     branches:
       - main
-      - dev  # Only run pushes on primary branches to prevent PR duplication
+      - dev
   pull_request:
     branches:
       - main
-      - dev  # Handles validation checks for all PRs targeting main/dev
+      - dev
   schedule:
     - cron: "0 0 * * *"  # Runs nightly check
 
@@ -24,8 +24,10 @@ jobs:
   # JOB 1: Sync Translations & Code Formatting (Linter)
   # =======================================================
   sync_and_format:
-    name: Sync Translations & Format Code  # Use this name in your updated branch protection rules!
+    name: Sync Translations & Format Code
     runs-on: ubuntu-latest
+    # Skip if this is a PR and the source branch is dev or main (to prevent duplicates)
+    if: github.event_name != 'pull_request' || (github.head_ref != 'dev' && github.head_ref != 'main')
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -61,6 +63,8 @@ jobs:
     name: Run Hassfest
     needs: sync_and_format
     runs-on: ubuntu-latest
+    # Skip if this is a PR and the source branch is dev or main (to prevent duplicates)
+    if: github.event_name != 'pull_request' || (github.head_ref != 'dev' && github.head_ref != 'main')
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -74,6 +78,8 @@ jobs:
     name: Run HACS Check
     needs: sync_and_format
     runs-on: ubuntu-latest
+    # Skip if this is a PR and the source branch is dev or main (to prevent duplicates)
+    if: github.event_name != 'pull_request' || (github.head_ref != 'dev' && github.head_ref != 'main')
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -89,6 +95,8 @@ jobs:
     name: Type Checking
     needs: sync_and_format
     runs-on: ubuntu-latest
+    # Skip if this is a PR and the source branch is dev or main (to prevent duplicates)
+    if: github.event_name != 'pull_request' || (github.head_ref != 'dev' && github.head_ref != 'main')
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
