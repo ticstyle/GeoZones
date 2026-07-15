@@ -11,6 +11,8 @@ CONF_WIFI_SSID_SENSOR: Final = "wifi_ssid_sensor"
 CONF_HOME_SSIDS: Final = "home_ssids"
 CONF_HOME_ZONE: Final = "home_zone"
 
+DEFAULT_HOME_ZONE: Final = "zone.home"
+
 ATTR_CONTAINING_ZONES: Final = "containing_zones"
 STORAGE_DIR: Final = "geozones"
 
