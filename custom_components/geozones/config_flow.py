@@ -38,6 +38,16 @@ class GeoZonesConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     VERSION = 1
 
+    def _get_previously_configured_ssids(self) -> list[str]:
+        """Collect all unique SSIDs previously configured in other integration entries."""
+        ssids: set[str] = set()
+        if self.hass:
+            for entry in self.hass.config_entries.async_entries(DOMAIN):
+                entry_ssids = entry.data.get(CONF_HOME_SSIDS, [])
+                if isinstance(entry_ssids, list):
+                    ssids.update(entry_ssids)
+        return sorted(list(ssids))
+
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
@@ -77,7 +87,9 @@ class GeoZonesConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                                 CONF_WIFI_SSID_SENSOR
                             ),
                             CONF_HOME_SSIDS: user_input.get(CONF_HOME_SSIDS, []),
-                            CONF_HOME_ZONE: user_input.get(CONF_HOME_ZONE, "zone.home"),
+                            CONF_HOME_ZONE: user_input.get(
+                                CONF_HOME_ZONE, "zone.home"
+                            ),
                         },
                     )
 
@@ -112,7 +124,7 @@ class GeoZonesConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 ),
                 vol.Optional(CONF_HOME_SSIDS): SelectSelector(
                     SelectSelectorConfig(
-                        options=[],
+                        options=self._get_previously_configured_ssids(),
                         multiple=True,
                         custom_value=True,
                     )
@@ -164,7 +176,9 @@ class GeoZonesConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                                 CONF_WIFI_SSID_SENSOR
                             ),
                             CONF_HOME_SSIDS: user_input.get(CONF_HOME_SSIDS, []),
-                            CONF_HOME_ZONE: user_input.get(CONF_HOME_ZONE, "zone.home"),
+                            CONF_HOME_ZONE: user_input.get(
+                                CONF_HOME_ZONE, "zone.home"
+                            ),
                         },
                     )
 
@@ -185,10 +199,12 @@ class GeoZonesConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         current_home_zone = config_entry.data.get(CONF_HOME_ZONE, "zone.home")
 
         schema_dict = {
-            vol.Required(CONF_SOURCE_TRACKER, default=current_tracker): EntitySelector(
-                EntitySelectorConfig(domain="device_tracker")
-            ),
-            vol.Required(CONF_GEOJSON_SOURCE, default=current_source): TextSelector(),
+            vol.Required(
+                CONF_SOURCE_TRACKER, default=current_tracker
+            ): EntitySelector(EntitySelectorConfig(domain="device_tracker")),
+            vol.Required(
+                CONF_GEOJSON_SOURCE, default=current_source
+            ): TextSelector(),
             vol.Optional(
                 CONF_MAX_GPS_ACCURACY, default=current_accuracy
             ): NumberSelector(NumberSelectorConfig(min=1, max=1000, step=1)),
@@ -206,7 +222,7 @@ class GeoZonesConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         schema_dict[vol.Optional(CONF_HOME_SSIDS, default=current_ssids)] = (
             SelectSelector(
                 SelectSelectorConfig(
-                    options=[],
+                    options=self._get_previously_configured_ssids(),
                     multiple=True,
                     custom_value=True,
                 )
@@ -235,6 +251,16 @@ class GeoZonesConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
 class GeoZonesOptionsFlowHandler(config_entries.OptionsFlow):
     """Handle continuous inline configuration adjustments after setup cycles."""
+
+    def _get_previously_configured_ssids(self) -> list[str]:
+        """Collect all unique SSIDs previously configured in other integration entries."""
+        ssids: set[str] = set()
+        if self.hass:
+            for entry in self.hass.config_entries.async_entries(DOMAIN):
+                entry_ssids = entry.data.get(CONF_HOME_SSIDS, [])
+                if isinstance(entry_ssids, list):
+                    ssids.update(entry_ssids)
+        return sorted(list(ssids))
 
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
@@ -269,7 +295,9 @@ class GeoZonesOptionsFlowHandler(config_entries.OptionsFlow):
                                 CONF_WIFI_SSID_SENSOR
                             ),
                             CONF_HOME_SSIDS: user_input.get(CONF_HOME_SSIDS, []),
-                            CONF_HOME_ZONE: user_input.get(CONF_HOME_ZONE, "zone.home"),
+                            CONF_HOME_ZONE: user_input.get(
+                                CONF_HOME_ZONE, "zone.home"
+                            ),
                         },
                     )
                     return self.async_create_entry(title="", data={})
@@ -291,10 +319,12 @@ class GeoZonesOptionsFlowHandler(config_entries.OptionsFlow):
         current_home_zone = self.config_entry.data.get(CONF_HOME_ZONE, "zone.home")
 
         schema_dict = {
-            vol.Required(CONF_SOURCE_TRACKER, default=current_tracker): EntitySelector(
-                EntitySelectorConfig(domain="device_tracker")
-            ),
-            vol.Required(CONF_GEOJSON_SOURCE, default=current_source): TextSelector(),
+            vol.Required(
+                CONF_SOURCE_TRACKER, default=current_tracker
+            ): EntitySelector(EntitySelectorConfig(domain="device_tracker")),
+            vol.Required(
+                CONF_GEOJSON_SOURCE, default=current_source
+            ): TextSelector(),
             vol.Optional(
                 CONF_MAX_GPS_ACCURACY, default=current_accuracy
             ): NumberSelector(NumberSelectorConfig(min=1, max=1000, step=1)),
@@ -312,7 +342,7 @@ class GeoZonesOptionsFlowHandler(config_entries.OptionsFlow):
         schema_dict[vol.Optional(CONF_HOME_SSIDS, default=current_ssids)] = (
             SelectSelector(
                 SelectSelectorConfig(
-                    options=[],
+                    options=self._get_previously_configured_ssids(),
                     multiple=True,
                     custom_value=True,
                 )
