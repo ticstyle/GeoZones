@@ -80,4 +80,3 @@ async def async_reload_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
     """Force a complete thread-safe reload cycle sequence when settings are adjusted."""
     _LOGGER.info("Reconfiguration detected. Reloading GeoZones instance")
     await hass.config_entries.async_reload(entry.entry_id)
-    
