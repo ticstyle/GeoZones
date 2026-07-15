@@ -3,11 +3,12 @@ name: CI/CD Pipeline
 on:
   push:
     branches:
-      - '**'  # Runs on pushes to any branch
+      - main
+      - dev  # Only run pushes on primary branches to prevent PR duplication
   pull_request:
     branches:
       - main
-      - dev
+      - dev  # Handles validation checks for all PRs targeting main/dev
   schedule:
     - cron: "0 0 * * *"  # Runs nightly check
 
@@ -19,17 +20,17 @@ permissions:
   contents: write
 
 jobs:
-  # ==========================================
-  # JOB 1: Sync Translations & Code Formatting
-  # ==========================================
+  # =======================================================
+  # JOB 1: Sync Translations & Code Formatting (Linter)
+  # =======================================================
   sync_and_format:
-    name: Sync Translations & Format Code
+    name: Sync Translations & Format Code  # Use this name in your updated branch protection rules!
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
-          token: ${{ secrets.MY_WORKFLOW_SECRET }}  # Uses your PAT to trigger tests on the auto-commit
+          token: ${{ secrets.MY_WORKFLOW_SECRET }}  # Uses PAT to allow recursive test triggers
           ref: ${{ github.head_ref || github.ref }}
           fetch-depth: 0
 
@@ -121,7 +122,7 @@ jobs:
   release:
     name: Create GitHub Release
     needs: [hassfest, hacs, mypy]
-    # Only allow releases to run on push events to main or dev
+    # Safety Gate: Only allow releases to run on push events to main or dev branches
     if: github.event_name == 'push' && (github.ref_name == 'main' || github.ref_name == 'dev')
     runs-on: ubuntu-latest
     steps:
