@@ -213,8 +213,8 @@ class GeoZonesConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 options=self._get_previously_configured_ssids(),
                 multiple=True,
                 custom_value=True,
+                )
             )
-        )
 
         schema_dict[vol.Optional(CONF_HOME_ZONE, default="zone.home")] = EntitySelector(
             EntitySelectorConfig(domain="zone")
@@ -463,7 +463,7 @@ class GeoZonesOptionsFlowHandler(config_entries.OptionsFlow):
             current_tracker
         )
 
-        if @suggested_wifi:
+        if suggested_wifi:
             schema_dict[vol.Optional(CONF_WIFI_SSID_SENSOR, default=suggested_wifi)] = (
                 EntitySelector(EntitySelectorConfig(domain="sensor"))
             )
