@@ -30,7 +30,7 @@ jobs:
     if: github.event_name != 'pull_request' || (github.head_ref != 'dev' && github.head_ref != 'main')
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           token: ${{ secrets.MY_WORKFLOW_SECRET }}  # Uses PAT to allow recursive test triggers
           ref: ${{ github.head_ref || github.ref }}
@@ -41,17 +41,17 @@ jobs:
           cp custom_components/geozones/strings.json custom_components/geozones/translations/en.json
 
       - name: Run Ruff Check
-        uses: astral-sh/ruff-action@v3
+        uses: astral-sh/ruff-action@v4
         with:
           args: "check --fix custom_components/geozones"
 
       - name: Run Ruff Format
-        uses: astral-sh/ruff-action@v3
+        uses: astral-sh/ruff-action@v4
         with:
           args: "format custom_components/geozones"
 
       - name: Commit & Push changes if needed
-        uses: stefanzweifel/git-auto-commit-action@v5
+        uses: stefanzweifel/git-auto-commit-action@v7
         with:
           commit_message: "chore: sync translations and auto-format with Ruff [skip ci]"
           file_pattern: "custom_components/geozones/translations/en.json custom_components/geozones/**"
@@ -67,7 +67,7 @@ jobs:
     if: github.event_name != 'pull_request' || (github.head_ref != 'dev' && github.head_ref != 'main')
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: ${{ github.head_ref || github.ref }}
 
@@ -82,7 +82,7 @@ jobs:
     if: github.event_name != 'pull_request' || (github.head_ref != 'dev' && github.head_ref != 'main')
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: ${{ github.head_ref || github.ref }}
 
@@ -99,7 +99,7 @@ jobs:
     if: github.event_name != 'pull_request' || (github.head_ref != 'dev' && github.head_ref != 'main')
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: ${{ github.head_ref || github.ref }}
 
@@ -110,7 +110,7 @@ jobs:
           cache: "pip"
 
       - name: Cache Mypy internal analysis
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: .mypy_cache
           key: ${{ runner.os }}-mypy-${{ hashFiles('requirements.txt') }}
@@ -135,7 +135,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -181,7 +181,7 @@ jobs:
         with:
           tag_name: v${{ steps.get_version.outputs.VERSION }}
           name: v${{ steps.get_version.outputs.VERSION }}
-          target_commitish: ${{ github.sha }}  # 🎯 Pin the tag/release to the exact commit SHA that triggered this run
+          target_commitish: ${{ github.sha }}  # Pin the tag/release to the exact commit SHA that triggered this run
           generate_release_notes: true
           draft: false
           prerelease: ${{ steps.get_version.outputs.IS_PRERELEASE == 'true' }}
