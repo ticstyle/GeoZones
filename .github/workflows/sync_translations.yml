@@ -3,17 +3,22 @@ name: Sync Translations
 on:
   push:
     branches:
-      - '**'  # Runs on pushes to ANY branch (dev, main, feature branches)
+      - '**' 
+    paths:
+      - 'custom_components/geozones/strings.json'
+
+permissions:
+  contents: write
 
 jobs:
   sync:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write  # Grants permission to push commits back to your repo
 
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.MY_WORKFLOW_SECRET }}
 
       - name: Copy strings.json to translations/en.json
         run: |
