@@ -213,8 +213,8 @@ class GeoZonesConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 options=self._get_previously_configured_ssids(),
                 multiple=True,
                 custom_value=True,
-                )
             )
+        )
 
         schema_dict[vol.Optional(CONF_HOME_ZONE, default="zone.home")] = EntitySelector(
             EntitySelectorConfig(domain="zone")
@@ -492,4 +492,3 @@ class GeoZonesOptionsFlowHandler(config_entries.OptionsFlow):
             errors=errors,
             description_placeholders={"local_files": files_text},
         )
-        
