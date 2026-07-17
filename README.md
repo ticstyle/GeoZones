@@ -4,15 +4,19 @@
   <img src="https://github.com/ticstyle/GeoZones/blob/main/custom_components/geozones/brand/logo.png" alt="GeoZones Logo" width="800" />
 </p>
 
-![](https://img.shields.io/github/v/release/ticstyle/GeoZones?style=for-the-badge&color=blue)
-![](https://img.shields.io/badge/Home%20Assistant-Custom%20Integration-blue?style=for-the-badge&logo=home-assistant)
-[![Hassfest](https://img.shields.io/github/actions/workflow/status/ticstyle/GeoZones/pipeline.yml?branch=main&job=hassfest&label=Hassfest&style=for-the-badge)](https://github.com/ticstyle/GeoZones/actions/workflows/pipeline.yml)
-[![HACS Validation](https://img.shields.io/github/actions/workflow/status/ticstyle/GeoZones/pipeline.yml?branch=main&job=hacs&label=HACS&style=for-the-badge)](https://github.com/ticstyle/GeoZones/actions/workflows/pipeline.yml)
-[![Ruff / Format](https://img.shields.io/github/actions/workflow/status/ticstyle/GeoZones/pipeline.yml?branch=main&job=sync_and_format&label=Ruff%20%2F%20Format&style=for-the-badge)](https://github.com/ticstyle/GeoZones/actions/workflows/pipeline.yml)
-[![Mypy](https://img.shields.io/github/actions/workflow/status/ticstyle/GeoZones/pipeline.yml?branch=main&job=mypy&label=Mypy&style=for-the-badge)](https://github.com/ticstyle/GeoZones/actions/workflows/pipeline.yml)
-![](https://img.shields.io/github/license/ticstyle/GeoZones?style=for-the-badge)
-![](https://img.shields.io/badge/dynamic/json?style=for-the-badge&color=41BDF5&logo=home-assistant&label=installs&url=https%3A%2F%2Fanalytics.home-assistant.io%2Fcustom_integrations.json&query=%24.geozones.total)
-![](https://img.shields.io/github/issues/ticstyle/GeoZones?style=for-the-badge&color=orange)
+![Latest Release](https://img.shields.io/github/v/release/ticstyle/GeoZones?color=blue&label=Release)
+![Last Updated](https://img.shields.io/github/last-commit/ticstyle/GeoZones?path=hacs.json&label=Maintained)
+![Issues](https://img.shields.io/github/issues/ticstyle/GeoZones?color=orange&label=Issues)
+![](https://img.shields.io/badge/Home%20Assistant-Custom%20Integration-blue?logo=home-assistant)
+![](https://img.shields.io/badge/dynamic/json?url=https://raw.githubusercontent.com/ticstyle/GeoZones/main/hacs.json&query=%24.homeassistant&suffix=%2B&label=Home%20Assistant&logo=homeassistant)
+
+![License](https://img.shields.io/github/license/ticstyle/GeoZones?label=License)
+[![Hassfest](https://img.shields.io/github/actions/workflow/status/ticstyle/GeoZones/pipeline.yml?branch=main&job=hassfest&label=Hassfest)](https://github.com/ticstyle/GeoZones/actions/workflows/pipeline.yml)
+[![HACS Validation](https://img.shields.io/github/actions/workflow/status/ticstyle/GeoZones/pipeline.yml?branch=main&job=hacs&label=HACS)](https://github.com/ticstyle/GeoZones/actions/workflows/pipeline.yml)
+[![Ruff / Format](https://img.shields.io/github/actions/workflow/status/ticstyle/GeoZones/pipeline.yml?branch=main&job=sync_and_format&label=Ruff%20%2F%20Format)](https://github.com/ticstyle/GeoZones/actions/workflows/pipeline.yml)
+[![Mypy](https://img.shields.io/github/actions/workflow/status/ticstyle/GeoZones/pipeline.yml?branch=main&job=mypy&label=Mypy)](https://github.com/ticstyle/GeoZones/actions/workflows/pipeline.yml)
+![Installs](https://img.shields.io/badge/dynamic/json?color=41BDF5&logo=home-assistant&label=Known%20installs&url=https%3A%2F%2Fanalytics.home-assistant.io%2Fcustom_integrations.json&query=%24.geozones.total)
+
 
 An asynchronous Home Assistant custom integration for advanced device tracker localization using local or remote GeoJSON layers. It cleanly processes nested, complex geometries—automatically prioritizing your smallest physical zones over larger overlapping ones.
 
