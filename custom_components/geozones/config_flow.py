@@ -27,6 +27,7 @@ from .const import (
     CONF_SOURCE_TRACKER,
     CONF_WIFI_SSID_SENSOR,
     DOMAIN,
+    DEFAULT_HOME_ZONE,
 )
 from .utils import fetch_and_process_geojson, get_all_geojson_files
 
@@ -184,7 +185,7 @@ class GeoZonesConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     CONF_MAX_GPS_ACCURACY: user_input.get(CONF_MAX_GPS_ACCURACY, 50),
                     CONF_WIFI_SSID_SENSOR: user_input.get(CONF_WIFI_SSID_SENSOR),
                     CONF_HOME_SSIDS: user_input.get(CONF_HOME_SSIDS, []),
-                    CONF_HOME_ZONE: user_input.get(CONF_HOME_ZONE, "zone.home"),
+                    CONF_HOME_ZONE: DEFAULT_HOME_ZONE,
                 },
             )
 
@@ -192,7 +193,6 @@ class GeoZonesConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             self._user_data[CONF_SOURCE_TRACKER]
         )
 
-        # Added dynamic typings here to resolve validation issues in the build step
         schema_dict: dict[Any, Any] = {
             vol.Optional(CONF_MAX_GPS_ACCURACY, default=50): NumberSelector(
                 NumberSelectorConfig(min=1, max=1000, step=1)
@@ -214,10 +214,6 @@ class GeoZonesConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 multiple=True,
                 custom_value=True,
             )
-        )
-
-        schema_dict[vol.Optional(CONF_HOME_ZONE, default="zone.home")] = EntitySelector(
-            EntitySelectorConfig(domain="zone")
         )
 
         return self.async_show_form(
@@ -260,7 +256,7 @@ class GeoZonesConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                                 CONF_WIFI_SSID_SENSOR
                             ),
                             CONF_HOME_SSIDS: user_input.get(CONF_HOME_SSIDS, []),
-                            CONF_HOME_ZONE: user_input.get(CONF_HOME_ZONE, "zone.home"),
+                            CONF_HOME_ZONE: DEFAULT_HOME_ZONE,
                         },
                     )
 
@@ -278,7 +274,6 @@ class GeoZonesConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         current_accuracy = config_entry.data.get(CONF_MAX_GPS_ACCURACY, 50)
         current_wifi_sensor = config_entry.data.get(CONF_WIFI_SSID_SENSOR)
         current_ssids = config_entry.data.get(CONF_HOME_SSIDS, [])
-        current_home_zone = config_entry.data.get(CONF_HOME_ZONE, "zone.home")
 
         schema_dict: dict[Any, Any] = {
             vol.Required(CONF_SOURCE_TRACKER, default=current_tracker): EntitySelector(
@@ -290,7 +285,6 @@ class GeoZonesConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             ): NumberSelector(NumberSelectorConfig(min=1, max=1000, step=1)),
         }
 
-        # Automatically locate the best-matched sensor if none is currently saved
         suggested_wifi = current_wifi_sensor or self._find_matching_wifi_sensor(
             current_tracker
         )
@@ -312,10 +306,6 @@ class GeoZonesConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     custom_value=True,
                 )
             )
-        )
-
-        schema_dict[vol.Optional(CONF_HOME_ZONE, default=current_home_zone)] = (
-            EntitySelector(EntitySelectorConfig(domain="zone"))
         )
 
         return self.async_show_form(
@@ -427,7 +417,7 @@ class GeoZonesOptionsFlowHandler(config_entries.OptionsFlow):
                                 CONF_WIFI_SSID_SENSOR
                             ),
                             CONF_HOME_SSIDS: user_input.get(CONF_HOME_SSIDS, []),
-                            CONF_HOME_ZONE: user_input.get(CONF_HOME_ZONE, "zone.home"),
+                            CONF_HOME_ZONE: DEFAULT_HOME_ZONE,
                         },
                     )
                     return self.async_create_entry(title="", data={})
@@ -446,7 +436,6 @@ class GeoZonesOptionsFlowHandler(config_entries.OptionsFlow):
         current_accuracy = self.config_entry.data.get(CONF_MAX_GPS_ACCURACY, 50)
         current_wifi_sensor = self.config_entry.data.get(CONF_WIFI_SSID_SENSOR)
         current_ssids = self.config_entry.data.get(CONF_HOME_SSIDS, [])
-        current_home_zone = self.config_entry.data.get(CONF_HOME_ZONE, "zone.home")
 
         schema_dict: dict[Any, Any] = {
             vol.Required(CONF_SOURCE_TRACKER, default=current_tracker): EntitySelector(
@@ -458,7 +447,6 @@ class GeoZonesOptionsFlowHandler(config_entries.OptionsFlow):
             ): NumberSelector(NumberSelectorConfig(min=1, max=1000, step=1)),
         }
 
-        # Automatically locate the best-matched sensor if none is currently saved
         suggested_wifi = current_wifi_sensor or self._find_matching_wifi_sensor(
             current_tracker
         )
@@ -480,10 +468,6 @@ class GeoZonesOptionsFlowHandler(config_entries.OptionsFlow):
                     custom_value=True,
                 )
             )
-        )
-
-        schema_dict[vol.Optional(CONF_HOME_ZONE, default=current_home_zone)] = (
-            EntitySelector(EntitySelectorConfig(domain="zone"))
         )
 
         return self.async_show_form(

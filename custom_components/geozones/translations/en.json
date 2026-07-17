@@ -18,14 +18,12 @@
         "data": {
           "max_gps_accuracy": "Maximum GPS Accuracy (meters)",
           "wifi_ssid_sensor": "Wi-Fi SSID Sensor (Optional)",
-          "home_ssids": "Home Wi-Fi SSIDs (Optional)",
-          "home_zone": "Home Zone Entity (Optional)"
+          "home_ssids": "Home Wi-Fi SSIDs (Optional)"
         },
         "data_description": {
           "max_gps_accuracy": "Location updates with accuracy worse than this threshold will be filtered out to prevent GPS drift. (default is 50 meters)",
           "wifi_ssid_sensor": "Select your mobile companion app's Wi-Fi connection sensor.",
-          "home_ssids": "Add your home Wi-Fi networks. Connecting to any of these will instantly anchor your state to your chosen Home Zone.",
-          "home_zone": "The zone to anchor to when connected to any of the specified home Wi-Fi networks."
+          "home_ssids": "Add your home Wi-Fi networks. Connecting to any of these will instantly anchor your state to your home configuration footprint."
         }
       },
       "reconfigure": {
@@ -36,15 +34,13 @@
           "geojson_source": "GeoJSON File Source URL / Path",
           "max_gps_accuracy": "Maximum GPS Accuracy (meters)",
           "wifi_ssid_sensor": "Wi-Fi SSID Sensor (Optional)",
-          "home_ssids": "Home Wi-Fi SSIDs (Optional)",
-          "home_zone": "Home Zone Entity (Optional)"
+          "home_ssids": "Home Wi-Fi SSIDs (Optional)"
         },
         "data_description": {
           "geojson_source": "e.g., domain.com/zones.json or a local path like /geozones/sweden.geojson",
           "max_gps_accuracy": "Location updates with accuracy worse than this threshold will be filtered out to prevent GPS drift. (default is 50 meters)",
           "wifi_ssid_sensor": "Select your mobile companion app's Wi-Fi connection sensor.",
-          "home_ssids": "Add your home Wi-Fi networks. Connecting to any of these will instantly anchor your state to your chosen Home Zone.",
-          "home_zone": "The zone to anchor to when connected to any of the specified home Wi-Fi networks."
+          "home_ssids": "Add your home Wi-Fi networks. Connecting to any of these will instantly anchor your state to your home configuration footprint."
         }
       }
     },
@@ -66,15 +62,13 @@
           "geojson_source": "GeoJSON File Source URL / Path",
           "max_gps_accuracy": "Maximum GPS Accuracy (meters)",
           "wifi_ssid_sensor": "Wi-Fi SSID Sensor (Optional)",
-          "home_ssids": "Home Wi-Fi SSIDs (Optional)",
-          "home_zone": "Home Zone Entity (Optional)"
+          "home_ssids": "Home Wi-Fi SSIDs (Optional)"
         },
         "data_description": {
           "geojson_source": "e.g., domain.com/zones.json or a local path like /geozones/sweden.geojson",
           "max_gps_accuracy": "Location updates with accuracy worse than this threshold will be filtered out to prevent GPS drift. (default is 50 meters)",
           "wifi_ssid_sensor": "Select your mobile companion app's Wi-Fi connection sensor.",
-          "home_ssids": "Add your home Wi-Fi networks. Connecting to any of these will instantly anchor your state to your chosen Home Zone.",
-          "home_zone": "The zone to anchor to when connected to any of the specified home Wi-Fi networks."
+          "home_ssids": "Add your home Wi-Fi networks. Connecting to any of these will instantly anchor your state to your home configuration footprint."
         }
       }
     },
