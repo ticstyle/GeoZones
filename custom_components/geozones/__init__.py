@@ -77,7 +77,17 @@ async def _async_ensure_dashboard_config(hass: HomeAssistant) -> None:
     store = Store[dict[str, Any]](hass, 1, "lovelace.geozones")
     existing_config = await store.async_load()
 
-    if existing_config is not None:
+    # Check if existing config contains active cards
+    has_cards = False
+    if existing_config and isinstance(existing_config, dict):
+        views = existing_config.get("config", {}).get("views", [])
+        for view in views:
+            if view.get("cards"):
+                has_cards = True
+                break
+
+    # If user already built custom cards, keep their layout
+    if has_cards:
         return
 
     entities_list: list[dict[str, Any] | str] = []
