@@ -40,20 +40,8 @@ PLATFORMS: list[Platform] = [
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
 
-def _get_active_select_zone_name(
-    hass: HomeAssistant, target_entity_id: str | None
-) -> str | None:
-    """Extract selected zone name from target or any registered select entity."""
-    if target_entity_id:
-        state = hass.states.get(target_entity_id)
-        if (
-            state
-            and state.domain == "select"
-            and state.state not in (None, "unknown", "unavailable")
-        ):
-            return state.state
-
-    # Search all domain select entities as fallback
+def _get_active_select_zone_name(hass: HomeAssistant) -> str | None:
+    """Extract selected zone name from any registered GeoZones select entity."""
     for state in hass.states.async_all("select"):
         if state.entity_id.startswith("select.geozones_") and state.state not in (
             None,
@@ -61,7 +49,6 @@ def _get_active_select_zone_name(
             "unavailable",
         ):
             return state.state
-
     return None
 
 
@@ -118,10 +105,9 @@ async def async_setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:
     async def handle_remove_zone(call: ServiceCall) -> None:
         """Handle the remove_zone custom service execution."""
         name: str | None = call.data.get("name")
-        entity_id: str | None = call.data.get("entity_id")
 
         if not name:
-            name = _get_active_select_zone_name(hass, entity_id)
+            name = _get_active_select_zone_name(hass)
 
         if not name:
             raise ServiceValidationError(
@@ -141,10 +127,9 @@ async def async_setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:
         """Handle the rename_zone custom service execution."""
         name: str | None = call.data.get("name")
         new_name: str = call.data["new_name"]
-        entity_id: str | None = call.data.get("entity_id")
 
         if not name:
-            name = _get_active_select_zone_name(hass, entity_id)
+            name = _get_active_select_zone_name(hass)
 
         if not name:
             raise ServiceValidationError(
@@ -183,12 +168,7 @@ async def async_setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:
         DOMAIN,
         "remove_zone",
         handle_remove_zone,
-        schema=vol.Schema(
-            {
-                vol.Optional("name"): cv.string,
-                vol.Optional("entity_id"): cv.entity_id,
-            }
-        ),
+        schema=vol.Schema({vol.Optional("name"): cv.string}),
     )
 
     hass.services.async_register(
@@ -199,7 +179,6 @@ async def async_setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:
             {
                 vol.Optional("name"): cv.string,
                 vol.Required("new_name"): cv.string,
-                vol.Optional("entity_id"): cv.entity_id,
             }
         ),
     )
