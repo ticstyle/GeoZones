@@ -89,14 +89,22 @@ async def _async_generate_dashboard_yaml(hass: HomeAssistant) -> str:
 
         entities_yaml_lines.extend(
             [
-                f"          - entity: select.geozones_{slug}_custom_zones\n"
-                f"            name: Select Custom Zone ({slug})",
-                f"          - entity: button.geozones_{slug}_mark_location\n"
-                f"            name: Mark Location ({slug})",
-                f"          - entity: button.geozones_{slug}_remove_zone\n"
-                f"            name: Remove Selected Zone ({slug})",
-                f"          - entity: button.geozones_{slug}_reload\n"
-                f"            name: Reload Layer ({slug})",
+                (
+                    f"          - entity: select.geozones_{slug}_custom_zones\n"
+                    f"            name: Select Custom Zone ({slug})"
+                ),
+                (
+                    f"          - entity: button.geozones_{slug}_mark_location\n"
+                    f"            name: Mark Location ({slug})"
+                ),
+                (
+                    f"          - entity: button.geozones_{slug}_remove_zone\n"
+                    f"            name: Remove Selected Zone ({slug})"
+                ),
+                (
+                    f"          - entity: button.geozones_{slug}_reload\n"
+                    f"            name: Reload Layer ({slug})"
+                ),
                 "          - type: divider",
             ]
         )
