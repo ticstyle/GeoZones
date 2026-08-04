@@ -1,11 +1,12 @@
 # custom_components/geozones/__init__.py
 """The GeoZones Component initialization runtime orchestration module."""
 
-import logging
 from datetime import datetime
+import logging
 from typing import Any
 
 import voluptuous as vol
+
 from homeassistant.components.frontend import (
     async_register_built_in_panel,
     async_remove_panel,
@@ -48,10 +49,9 @@ CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 def _get_active_select_zone_name(hass: HomeAssistant) -> str | None:
     """Extract selected zone name from any registered GeoZones select entity."""
     for state in hass.states.async_all("select"):
-        if state.entity_id.startswith("select.geozones_") and state.state not in (
-            None,
-            "unknown",
-            "unavailable",
+        if (
+            state.entity_id.startswith("select.geozones_")
+            and state.state not in (None, "unknown", "unavailable")
         ):
             return state.state
     return None
@@ -77,7 +77,17 @@ async def _async_ensure_dashboard_config(hass: HomeAssistant) -> None:
     store = Store[dict[str, Any]](hass, 1, "lovelace.geozones")
     existing_config = await store.async_load()
 
-    if existing_config is not None:
+    # Check if existing config contains active cards
+    has_cards = False
+    if existing_config and isinstance(existing_config, dict):
+        views = existing_config.get("config", {}).get("views", [])
+        for view in views:
+            if view.get("cards"):
+                has_cards = True
+                break
+
+    # If user already built custom cards, keep their layout
+    if has_cards:
         return
 
     entities_list: list[dict[str, Any] | str] = []
@@ -378,3 +388,4 @@ async def async_reload_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
     """Force a complete thread-safe reload cycle sequence when settings are adjusted."""
     _LOGGER.info("Reconfiguration detected. Reloading GeoZones instance")
     await hass.config_entries.async_reload(entry.entry_id)
+    
