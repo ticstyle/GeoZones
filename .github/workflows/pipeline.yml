@@ -48,7 +48,7 @@ jobs:
       - name: Commit & Push changes if needed
         uses: stefanzweifel/git-auto-commit-action@v7
         with:
-          commit_message: "chore: sync translations and auto-format with Ruff [skip ci]"
+          commit_message: "chore: sync translations and auto-format with Ruff"
           file_pattern: "custom_components/*/translations/en.json custom_components/**"
 
   # ==========================================
