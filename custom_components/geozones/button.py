@@ -1,5 +1,5 @@
 # custom_components/geozones/button.py
-"""Button platform entities for instant GeoZones location marking and reloading."""
+"""Button platform entities for instant GeoZones location marking, zone removal, and reloading."""
 
 import logging
 
@@ -13,7 +13,11 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.util import dt as dt_util
 
 from .const import CONF_SOURCE_TRACKER, DOMAIN
-from .utils import async_add_custom_zone, fetch_and_process_geojson
+from .utils import (
+    async_add_custom_zone,
+    async_remove_custom_zone,
+    fetch_and_process_geojson,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -28,6 +32,7 @@ async def async_setup_entry(
     async_add_entities(
         [
             GeoZoneMarkLocationButton(hass, entry, source_tracker, entity_id_slug),
+            GeoZoneRemoveZoneButton(hass, entry, entity_id_slug),
             GeoZoneReloadButton(hass, entry, source_tracker, entity_id_slug),
         ]
     )
@@ -67,9 +72,7 @@ class GeoZoneMarkLocationButton(ButtonEntity):
         """Execute zone creation at current tracker coordinates when pressed."""
         tracker_state = self.hass.states.get(self._source_tracker)
         if not tracker_state:
-            raise ServiceValidationError(
-                f"Tracker {self._source_tracker} was not found."
-            )
+            raise ServiceValidationError(f"Tracker {self._source_tracker} was not found.")
 
         lat = tracker_state.attributes.get("latitude")
         lon = tracker_state.attributes.get("longitude")
@@ -80,9 +83,7 @@ class GeoZoneMarkLocationButton(ButtonEntity):
             )
 
         name = f"Marked Spot {dt_util.now().strftime('%Y-%m-%d %H:%M')}"
-        await async_add_custom_zone(
-            self.hass, name, float(lat), float(lon), radius=50.0
-        )
+        await async_add_custom_zone(self.hass, name, float(lat), float(lon), radius=50.0)
 
         # Reprocess all entries and fire dispatcher signals
         for entry in self.hass.config_entries.async_entries(DOMAIN):
@@ -91,9 +92,69 @@ class GeoZoneMarkLocationButton(ButtonEntity):
             use_custom = entry.data.get("use_custom_zones", True)
             slug = src.split(".")[-1]
 
-            path = await fetch_and_process_geojson(
-                self.hass, source_file, slug, use_custom
+            path = await fetch_and_process_geojson(self.hass, source_file, slug, use_custom)
+            if path:
+                async_dispatcher_send(self.hass, f"{DOMAIN}_reload_{entry.entry_id}")
+
+
+class GeoZoneRemoveZoneButton(ButtonEntity):
+    """Button entity to remove the currently selected custom zone from the device view."""
+
+    def __init__(
+        self,
+        hass: HomeAssistant,
+        entry: ConfigEntry,
+        entity_id_slug: str,
+    ) -> None:
+        """Initialize zone removal button instance."""
+        self.hass = hass
+        self._entry = entry
+        self._entity_id_slug = entity_id_slug
+
+        self._attr_name = f"GeoZones {entity_id_slug} Remove Zone"
+        self._attr_unique_id = f"geozones_{entity_id_slug}_remove_zone"
+        self._attr_icon = "mdi:map-marker-remove"
+
+    @property
+    def device_info(self) -> DeviceInfo:
+        """Link entity to main device container block."""
+        return DeviceInfo(
+            identifiers={(DOMAIN, self._entry.entry_id)},
+            name=f"GeoZones {self._entity_id_slug}",
+            manufacturer="ticstyle",
+            model="GeoZones",
+        )
+
+    async def async_press(self) -> None:
+        """Remove the zone selected in the companion select entity when pressed."""
+        select_entity_id = f"select.geozones_{self._entity_id_slug}_custom_zones"
+        select_state = self.hass.states.get(select_entity_id)
+
+        target_zone = (
+            select_state.state
+            if select_state and select_state.state not in (None, "unknown", "unavailable")
+            else None
+        )
+
+        if not target_zone:
+            raise ServiceValidationError(
+                "No custom zone is currently selected in the dropdown to remove."
             )
+
+        removed = await async_remove_custom_zone(self.hass, target_zone)
+        if not removed:
+            raise ServiceValidationError(
+                f"Zone '{target_zone}' was not found in the custom zones file."
+            )
+
+        # Reprocess all entries and fire dispatcher signals
+        for entry in self.hass.config_entries.async_entries(DOMAIN):
+            src = entry.data[CONF_SOURCE_TRACKER]
+            source_file = entry.data.get("geojson_source", "")
+            use_custom = entry.data.get("use_custom_zones", True)
+            slug = src.split(".")[-1]
+
+            path = await fetch_and_process_geojson(self.hass, source_file, slug, use_custom)
             if path:
                 async_dispatcher_send(self.hass, f"{DOMAIN}_reload_{entry.entry_id}")
 
@@ -135,8 +196,6 @@ class GeoZoneReloadButton(ButtonEntity):
             use_custom = entry.data.get("use_custom_zones", True)
             slug = src.split(".")[-1]
 
-            path = await fetch_and_process_geojson(
-                self.hass, source_file, slug, use_custom
-            )
+            path = await fetch_and_process_geojson(self.hass, source_file, slug, use_custom)
             if path:
                 async_dispatcher_send(self.hass, f"{DOMAIN}_reload_{entry.entry_id}")
