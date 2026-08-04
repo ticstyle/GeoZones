@@ -1,14 +1,13 @@
 # custom_components/geozones/__init__.py
 """The GeoZones Component initialization runtime orchestration module."""
 
-from datetime import datetime
 import logging
 import os
+from datetime import datetime
 from typing import Any
 
 import aiofiles
 import voluptuous as vol
-
 from homeassistant.components.frontend import (
     async_register_built_in_panel,
     async_remove_panel,
@@ -51,9 +50,10 @@ DASHBOARD_REL_PATH = "custom_components/geozones/geozones_dashboard.yaml"
 def _get_active_select_zone_name(hass: HomeAssistant) -> str | None:
     """Extract selected zone name from any registered GeoZones select entity."""
     for state in hass.states.async_all("select"):
-        if (
-            state.entity_id.startswith("select.geozones_")
-            and state.state not in (None, "unknown", "unavailable")
+        if state.entity_id.startswith("select.geozones_") and state.state not in (
+            None,
+            "unknown",
+            "unavailable",
         ):
             return state.state
     return None
@@ -371,4 +371,3 @@ async def async_reload_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
     """Force a complete thread-safe reload cycle sequence when settings are adjusted."""
     _LOGGER.info("Reconfiguration detected. Reloading GeoZones instance")
     await hass.config_entries.async_reload(entry.entry_id)
-    
