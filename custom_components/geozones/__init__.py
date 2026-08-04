@@ -1,11 +1,12 @@
 # custom_components/geozones/__init__.py
 """The GeoZones Component initialization runtime orchestration module."""
 
-import logging
 from datetime import datetime
+import logging
 from typing import Any
 
 import voluptuous as vol
+
 from homeassistant.components.frontend import (
     async_register_built_in_panel,
     async_remove_panel,
@@ -48,10 +49,9 @@ CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 def _get_active_select_zone_name(hass: HomeAssistant) -> str | None:
     """Extract selected zone name from any registered GeoZones select entity."""
     for state in hass.states.async_all("select"):
-        if state.entity_id.startswith("select.geozones_") and state.state not in (
-            None,
-            "unknown",
-            "unavailable",
+        if (
+            state.entity_id.startswith("select.geozones_")
+            and state.state not in (None, "unknown", "unavailable")
         ):
             return state.state
     return None
@@ -309,17 +309,23 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
     if not hass.data[DOMAIN].get("panel_registered"):
-        await _async_ensure_dashboard_config(hass)
-        async_register_built_in_panel(
-            hass,
-            component_name="lovelace",
-            sidebar_title="GeoZones",
-            sidebar_icon="mdi:map-marker-path",
-            frontend_url_path="geozones",
-            config={"mode": "storage", "title": "GeoZones"},
-            require_admin=False,
-        )
         hass.data[DOMAIN]["panel_registered"] = True
+        try:
+            await _async_ensure_dashboard_config(hass)
+            async_register_built_in_panel(
+                hass,
+                component_name="lovelace",
+                sidebar_title="GeoZones",
+                sidebar_icon="mdi:map-marker-path",
+                frontend_url_path="geozones",
+                config={"mode": "storage", "title": "GeoZones"},
+                require_admin=False,
+            )
+        except ValueError:
+            _LOGGER.debug("GeoZones panel already registered")
+        except Exception as err:
+            hass.data[DOMAIN]["panel_registered"] = False
+            _LOGGER.error("Failed to register GeoZones panel: %s", err)
 
     async def nightly_refresh_callback(now: datetime) -> None:
         """Automated scheduled update tracking execution pass handle context."""
