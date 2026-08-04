@@ -5,6 +5,7 @@ import logging
 import os
 
 import aiofiles  # type: ignore[import-untyped]
+
 from homeassistant.components.frontend import (
     async_register_built_in_panel,
     async_remove_panel,
@@ -73,8 +74,8 @@ async def async_generate_dashboard_yaml(hass: HomeAssistant) -> str:
 
     yaml_content = f"""title: GeoZones
 views:
-  - title: Overview
-    path: overview
+  - title: GeoZones
+    path: geozones-overview
     icon: mdi:map-marker-radius
     type: masonry
     cards:
