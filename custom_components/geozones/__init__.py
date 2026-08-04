@@ -323,7 +323,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             )
         except ValueError:
             _LOGGER.debug("GeoZones panel already registered")
-        except Exception as err:
+        except OSError as err:
             hass.data[DOMAIN]["panel_registered"] = False
             _LOGGER.error("Failed to register GeoZones panel: %s", err)
 
@@ -378,3 +378,4 @@ async def async_reload_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
     """Force a complete thread-safe reload cycle sequence when settings are adjusted."""
     _LOGGER.info("Reconfiguration detected. Reloading GeoZones instance")
     await hass.config_entries.async_reload(entry.entry_id)
+    
