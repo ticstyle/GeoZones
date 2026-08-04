@@ -4,8 +4,8 @@ add_zone:
   fields:
     name:
       name: Zone Name
-      description: Name of the zone to create.
-      required: true
+      description: Name of the zone to create (defaults to "Marked Spot YYYY-MM-DD HH:MM" if omitted).
+      required: false
       selector:
         text:
     entity_id:
@@ -45,23 +45,30 @@ add_zone:
 
 remove_zone:
   name: Remove zone
-  description: Remove a custom zone from the shared GeoZones custom file.
+  description: Remove a custom zone from the shared GeoZones file (falls back to selected option in custom zones dropdown if name is omitted).
   fields:
     name:
       name: Zone Name
       description: Name of the custom zone to remove.
-      required: true
+      required: false
       selector:
         text:
+    entity_id:
+      name: Target Select Entity
+      description: Optional GeoZones select entity to target.
+      required: false
+      selector:
+        entity:
+          domain: select
 
 rename_zone:
   name: Rename zone
-  description: Rename an existing custom zone in the shared GeoZones custom file.
+  description: Rename an existing custom zone in the shared GeoZones file (falls back to selected option in custom zones dropdown if target name is omitted).
   fields:
     name:
       name: Current Zone Name
       description: Current name of the custom zone to rename.
-      required: true
+      required: false
       selector:
         text:
     new_name:
@@ -70,6 +77,13 @@ rename_zone:
       required: true
       selector:
         text:
+    entity_id:
+      name: Target Select Entity
+      description: Optional GeoZones select entity to target.
+      required: false
+      selector:
+        entity:
+          domain: select
 
 reload:
   name: Reload GeoZones
