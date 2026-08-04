@@ -17,7 +17,6 @@
 [![Mypy](https://img.shields.io/github/actions/workflow/status/ticstyle/GeoZones/pipeline.yml?branch=main&job=mypy&label=Mypy)](https://github.com/ticstyle/GeoZones/actions/workflows/pipeline.yml)
 ![Installs](https://img.shields.io/badge/dynamic/json?color=41BDF5&logo=home-assistant&label=Known%20installs&url=https%3A%2F%2Fanalytics.home-assistant.io%2Fcustom_integrations.json&query=%24.GeoZones.total)
 
-
 An asynchronous Home Assistant custom integration for advanced device tracker localization using local or remote GeoJSON layers. It cleanly processes nested, complex geometries—automatically prioritizing your smallest physical zones over larger overlapping ones.
 
 To add this integration, please add the custom repository `https://github.com/ticstyle/GeoZones/` to HACS in your Home Assistant setup.
@@ -27,6 +26,8 @@ This integration is written and maintained exclusively in **English**. All entit
 
 ## ✨ Features
 * **Smallest-Area Priority Hierarchy:** Automatically parses your GeoJSON data, exploding any complex `MultiPolygon` arrays into clean individual polygons. It then automatically sorts them from smallest to largest area, ensuring that nested sub-zones (like a small store inside a large shopping district) match first.
+* **On-the-Fly Dynamic Custom Zones:** Mark your current spot or add new circular zones on the fly without editing files manually. Custom zones are saved to a shared `/config/geozones/geozones_custom_zones.geojson` file and automatically merged into your active tracking layers.
+* **Native Control Entities:** Each configured tracker mirror automatically includes 1-tap `button` entities to mark location or trigger reloads, as well as a `select` entity dropdown listing all active custom zones.
 * **Smart Wi-Fi SSID Localizing:** Pairs with your device's native companion app network sensor. It features an intelligent keyword matching algorithm that automatically ignores hardware BSSID/MAC addresses, isolates your true network SSID, and binds your tracking state instantly to home when connected to a designated Wi-Fi network.
 * **GPS Jitter & Accuracy Filtering:** Configure a customized maximum GPS accuracy threshold (defaults to 50 meters) to ignore sloppy coordinate drift, preventing false-positive zone updates during weak signal telemetry events.
 * **In-Memory RAM Caching:** Files are read into memory exactly once at startup or after update sequences. This prevents slow disk I/O reads or loop bottlenecks during high-frequency real-time GPS coordinate telemetry updates.
@@ -51,22 +52,54 @@ During setup or reconfiguration, you will be prompted to provide:
 3. **Max GPS Accuracy:** High-frequency GPS telemetry filter distance threshold in meters (default: `50`).
 4. **Wi-Fi SSID Sensor (Optional):** The parent sensor tracking your device's connected SSID (automatically matched during setup).
 5. **Home SSIDs (Optional):** A customizable list of network names that designate your Home wireless network profile.
-6. **Home Zone (Optional):** The target zone representing your primary residence (default: `zone.home`).
+6. **Include Shared Custom Zones File:** Toggle whether dynamic custom zones saved in `/config/geozones/geozones_custom_zones.geojson` are merged into this tracker layer (default: `True`).
 
 ---
 
 ## 📊 Available Entities
 When parsing your selected source tracker (e.g., `device_tracker.iphone_stoffe`), the integration registers a mirrored tracking device entry containing a custom identifier map:
 
-| Entity ID | Name in UI | State Example | Description |
+| Entity ID | Name in UI | Domain | Description |
 | :--- | :--- | :--- | :--- |
-| `device_tracker.geozones_my_phone` | GeoZones my_phone | `Coffee Shop` | The current matching zone name, prioritizing the smallest area structure. Returns `not_home` when outside polygon footprints. |
+| `device_tracker.geozones_<slug>` | GeoZones \<slug\> | `device_tracker` | The current matching zone name, prioritizing the smallest area structure. Returns `not_home` when outside polygon footprints. |
+| `button.geozones_<slug>_mark_location` | GeoZones \<slug\> Mark Location | `button` | Pressing this button instantly creates a new 50-meter circular zone at the device tracker's current GPS location. |
+| `button.geozones_<slug>_reload` | GeoZones \<slug\> Reload | `button` | Pressing this button triggers an immediate file re-sync, area calculation pass, and RAM memory reload. |
+| `select.geozones_<slug>_custom_zones` | GeoZones \<slug\> Custom Zones | `select` | Dynamic dropdown entity listing all custom zones stored in `/config/geozones/geozones_custom_zones.geojson`. |
 
-### Entity Attributes
+### Device Tracker Attributes
 The generated tracker entity exposes rich metadata parameters to analyze tracking boundaries:
 
 * `source_entity_id`: The underlying device tracker entity being monitored.
 * `containing_zones`: A nested string array listing **all overlapping zones** that the device is currently inside, sorted sequentially from smallest to largest area footprints.
+
+---
+
+## 🛠️ Custom Actions (Services)
+
+GeoZones registers custom actions to manage zones programmatically from automations, dashboard cards, or voice shortcuts:
+
+| Action | Parameters | Description |
+| :--- | :--- | :--- |
+| `geozones.add_zone` | `name` *(optional)*<br>`entity_id` *(optional)*<br>`latitude` *(optional)*<br>`longitude` *(optional)*<br>`radius` *(optional, default: 50)* | Adds a new circular custom zone to `geozones_custom_zones.geojson`. If `latitude` and `longitude` are omitted, it pulls live coordinates from the specified `entity_id`. If `name` is omitted, it defaults to a timestamped label. |
+| `geozones.remove_zone` | `name` *(optional)*<br>`entity_id` *(optional)* | Removes a zone from the shared custom zones file. If `name` is omitted, it automatically targets the zone currently selected in the `select` entity dropdown. |
+| `geozones.rename_zone` | `name` *(optional)*<br>`new_name` *(required)*<br>`entity_id` *(optional)* | Renames an existing custom zone in `geozones_custom_zones.geojson`. If `name` is omitted, it targets the currently selected dropdown option. Handles automatic suffix deduplication. |
+| `geozones.reload` | *None* | Forces an instant re-sync and RAM memory reload across all active GeoZones tracker entries. |
+
+### Dashboard Tap-to-Save Button Example
+Add a button card to your dashboard that saves your current position on a single tap:
+
+```yaml
+type: button
+name: Mark Current Location
+icon: mdi:map-marker-plus
+tap_action:
+  action: perform-action
+  perform_action: geozones.add_zone
+  data:
+    name: "Favorite Cafe"
+    entity_id: device_tracker.iphone_stoffe
+    radius: 50
+```
 
 ---
 
@@ -107,26 +140,29 @@ Because calculated parameters are exposed cleanly to the event bus, you can easi
 
 ```yaml
 type: markdown
-title: GeoZones status
+title: GeoZones Status
 content: >-
   {% set trackers = states.device_tracker 
      | selectattr('entity_id', 'search', '^device_tracker\\.geozones_') 
      | list %}
   {% if trackers | length > 0 %}
-   ### {% for tracker in trackers %}
+    {% for tracker in trackers %}
       ### 📱 {{ tracker.name }}
       * **Current Zone:** `{{ tracker.state }}`
       * **Source Target:** `{{ state_attr(tracker.entity_id, 'source_entity_id') }}`
       
-      **Active in these zones (from smallest to largest):**{% set zones = state_attr(tracker.entity_id, 'containing_zones') %}{% if zones and zones | length > 0 %}{% for zone in zones %}
-        - {{ zone }}{% endfor %}
+      **Active in these zones (from smallest to largest):**
+      {% set zones = state_attr(tracker.entity_id, 'containing_zones') %}
+      {% if zones and zones | length > 0 %}
+        {% for zone in zones %}
+        - {{ zone }}
+        {% endfor %}
       {% else %}
         *Not inside any custom zones at the moment.*
       {% endif %}
       {% if not loop.last %}---{% endif %}
     {% endfor %}
-  {% else %}No active GeoZones tracker mirrors detected in the system entity
-  registry.
-
+  {% else %}
+    No active GeoZones tracker mirrors detected in the system entity registry.
   {% endif %}
 ```
