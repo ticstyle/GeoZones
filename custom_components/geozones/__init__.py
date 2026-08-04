@@ -2,17 +2,10 @@
 """The GeoZones Component initialization runtime orchestration module."""
 
 import logging
-import os
 from datetime import datetime
 from typing import Any
 
-import aiofiles  # type: ignore[import-untyped]
 import voluptuous as vol
-from homeassistant.components.frontend import (
-    async_register_built_in_panel,
-    async_remove_panel,
-)
-from homeassistant.components.lovelace.dashboard import LovelaceYAML
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant, ServiceCall
@@ -29,6 +22,7 @@ from .const import (
     DEFAULT_USE_CUSTOM_ZONES,
     DOMAIN,
 )
+from .dashboard import async_remove_dashboard, async_setup_dashboard
 from .utils import (
     async_add_custom_zone,
     async_ensure_custom_zones_file,
@@ -45,7 +39,6 @@ PLATFORMS: list[Platform] = [
 ]
 
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
-DASHBOARD_REL_PATH = "custom_components/geozones/geozones_dashboard.yaml"
 
 
 def _get_active_select_zone_name(hass: HomeAssistant) -> str | None:
@@ -73,112 +66,6 @@ async def _async_reprocess_all_entries(hass: HomeAssistant) -> None:
         )
         if path:
             async_dispatcher_send(hass, f"{DOMAIN}_reload_{entry.entry_id}")
-
-
-async def _async_generate_dashboard_yaml(hass: HomeAssistant) -> str:
-    """Generate and write the Lovelace dashboard YAML configuration file."""
-    dashboard_path = hass.config.path(DASHBOARD_REL_PATH)
-    os.makedirs(os.path.dirname(dashboard_path), exist_ok=True)
-
-    entities_yaml_lines: list[str] = []
-    entries = hass.config_entries.async_entries(DOMAIN)
-
-    if entries:
-        first_entry = entries[0]
-        source_tracker = first_entry.data.get(CONF_SOURCE_TRACKER, "")
-        if source_tracker:
-            slug = source_tracker.split(".")[-1]
-            entities_yaml_lines.extend(
-                [
-                    (
-                        f"          - entity: select.geozones_{slug}_custom_zones\n"
-                        "            name: Select Custom Zone"
-                    ),
-                    (
-                        f"          - entity: button.geozones_{slug}_mark_location\n"
-                        "            name: Mark Current Location"
-                    ),
-                    (
-                        f"          - entity: button.geozones_{slug}_remove_zone\n"
-                        "            name: Remove Selected Zone"
-                    ),
-                    (
-                        f"          - entity: button.geozones_{slug}_reload\n"
-                        "            name: Reload Layer"
-                    ),
-                ]
-            )
-
-    if not entities_yaml_lines:
-        entities_block = "          - entity: device_tracker.geozones"
-    else:
-        entities_block = "\n".join(entities_yaml_lines)
-
-    yaml_content = f"""title: GeoZones
-views:
-  - title: GeoZonesOverview
-    path: geozones-overview
-    icon: mdi:map-marker-radius
-    type: masonry
-    cards:
-      - type: markdown
-        title: "📍 Active Tracking Overview"
-        content: |
-          {{%- set trackers = states.device_tracker | selectattr('entity_id', 'search', '^device_tracker\\\\.geozones_') | list -%}}
-          {{%- if trackers | length > 0 -%}}
-          {{%- for t in trackers %}}
-          ### 📱 {{{{ t.name }}}}
-          * **Current Zone:** `{{{{ t.state }}}}`
-          * **Source Target:** `{{{{ state_attr(t.entity_id, 'source_entity_id') or t.entity_id }}}}`
-
-          **Active inside zones:**
-          {{%- set zones = state_attr(t.entity_id, 'containing_zones') -%}}
-          {{%- if zones and zones | length > 0 -%}}
-          {{%- for zone in zones %}}
-          - {{{{ zone }}}}
-          {{%- endfor -%}}
-          {{%- else %}}
-          *Not inside any custom zones.*
-          {{%- endif %}}
-
-          {{%- if not loop.last %}}
-          ---
-          {{%- endif %}}
-          {{%- endfor -%}}
-          {{%- else %}}
-          *No active GeoZones trackers detected.*
-          {{%- endif -%}}
-
-      - type: entities
-        title: "⚙️ Custom Zone Manager"
-        show_header_toggle: false
-        entities:
-{entities_block}
-
-      - type: markdown
-        title: "🗺️ All Loaded Zones"
-        content: |
-          {{%- set ns = namespace(zones=[]) -%}}
-          {{%- set trackers = states.device_tracker | selectattr('entity_id', 'search', '^device_tracker\\\\.geozones_') | list -%}}
-          {{%- for t in trackers -%}}
-            {{%- set cz = state_attr(t.entity_id, 'containing_zones') or [] -%}}
-            {{%- set lz = state_attr(t.entity_id, 'loaded_zones') or state_attr(t.entity_id, 'all_zones') or state_attr(t.entity_id, 'zones') or [] -%}}
-            {{%- set ns.zones = ns.zones + cz + lz -%}}
-          {{%- endfor -%}}
-          {{%- set unique_zones = ns.zones | unique | sort -%}}
-          {{%- if unique_zones | length > 0 -%}}
-          {{%- for z in unique_zones %}}
-          - {{{{ z }}}}
-          {{%- endfor -%}}
-          {{%- else %}}
-          *No loaded zones detected across active trackers.*
-          {{%- endif -%}}
-"""
-
-    async with aiofiles.open(dashboard_path, mode="w", encoding="utf-8") as file:
-        await file.write(yaml_content)
-
-    return DASHBOARD_REL_PATH
 
 
 async def async_setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:
@@ -317,26 +204,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     if not hass.data[DOMAIN].get("panel_registered"):
         hass.data[DOMAIN]["panel_registered"] = True
         try:
-            rel_path = await _async_generate_dashboard_yaml(hass)
-
-            if "lovelace" in hass.data and hasattr(hass.data["lovelace"], "dashboards"):
-                hass.data["lovelace"].dashboards["geozones"] = LovelaceYAML(
-                    hass, "geozones", {"mode": "yaml", "filename": rel_path}
-                )
-
-            async_register_built_in_panel(
-                hass,
-                component_name="lovelace",
-                sidebar_title="GeoZones",
-                sidebar_icon="mdi:map-marker-path",
-                frontend_url_path="geozones",
-                config={
-                    "mode": "yaml",
-                    "title": "GeoZones",
-                    "icon": "mdi:map-marker-path",
-                },
-                require_admin=False,
-            )
+            await async_setup_dashboard(hass)
         except ValueError:
             _LOGGER.debug("GeoZones panel already registered")
         except OSError as err:
@@ -384,9 +252,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             if e.entry_id != entry.entry_id
         ]
         if not remaining_entries and hass.data[DOMAIN].get("panel_registered"):
-            async_remove_panel(hass, "geozones")
-            if "lovelace" in hass.data and hasattr(hass.data["lovelace"], "dashboards"):
-                hass.data["lovelace"].dashboards.pop("geozones", None)
+            await async_remove_dashboard(hass)
             hass.data[DOMAIN]["panel_registered"] = False
 
     return unload_ok
