@@ -1,0 +1,76 @@
+add_zone:
+  name: Add zone
+  description: Add a new custom zone to the shared GeoZones custom file.
+  fields:
+    name:
+      name: Zone Name
+      description: Name of the zone to create.
+      required: true
+      selector:
+        text:
+    entity_id:
+      name: Source Device Tracker
+      description: Optional device tracker entity to capture current coordinates from.
+      required: false
+      selector:
+        entity:
+          domain: device_tracker
+    latitude:
+      name: Latitude
+      description: Target latitude coordinate for the new zone.
+      required: false
+      selector:
+        number:
+          mode: box
+          step: any
+    longitude:
+      name: Longitude
+      description: Target longitude coordinate for the new zone.
+      required: false
+      selector:
+        number:
+          mode: box
+          step: any
+    radius:
+      name: Radius
+      description: Radius of the zone boundary in meters (default 50).
+      required: false
+      default: 50
+      selector:
+        number:
+          mode: box
+          min: 5
+          max: 5000
+          unit_of_measurement: m
+
+remove_zone:
+  name: Remove zone
+  description: Remove a custom zone from the shared GeoZones custom file.
+  fields:
+    name:
+      name: Zone Name
+      description: Name of the custom zone to remove.
+      required: true
+      selector:
+        text:
+
+rename_zone:
+  name: Rename zone
+  description: Rename an existing custom zone in the shared GeoZones custom file.
+  fields:
+    name:
+      name: Current Zone Name
+      description: Current name of the custom zone to rename.
+      required: true
+      selector:
+        text:
+    new_name:
+      name: New Zone Name
+      description: Desired new name for the custom zone.
+      required: true
+      selector:
+        text:
+
+reload:
+  name: Reload GeoZones
+  description: Trigger a complete re-sync and recalculation pass for all active GeoZones tracking entries.
