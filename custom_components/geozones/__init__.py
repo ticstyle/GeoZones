@@ -1,8 +1,8 @@
 # custom_components/geozones/__init__.py
 """The GeoZones Component initialization runtime orchestration module."""
 
-import logging
 from datetime import datetime
+import logging
 from typing import Any
 
 import voluptuous as vol
@@ -14,6 +14,7 @@ from homeassistant.exceptions import ServiceValidationError
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.dispatcher import async_dispatcher_send
 from homeassistant.helpers.event import async_track_time_change
+from homeassistant.util import dt as dt_util
 
 from .const import (
     CONF_GEOJSON_SOURCE,
@@ -83,7 +84,7 @@ async def async_setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:
         entity_id: str | None = call.data.get("entity_id")
 
         if not name:
-            name = f"Marked Spot {datetime.now().strftime('%Y-%m-%d %H:%M')}"
+            name = f"Marked Spot {dt_util.now().strftime('%Y-%m-%d %H:%M')}"
 
         if lat is None or lon is None:
             if not entity_id:
