@@ -9,7 +9,6 @@ from typing import Any
 
 import aiofiles  # type: ignore[import-untyped]
 import aiohttp
-
 from homeassistant.core import HomeAssistant
 
 from .const import (
@@ -57,7 +56,9 @@ async def async_ensure_custom_zones_file(hass: HomeAssistant) -> str:
             async with aiofiles.open(custom_path, mode="w", encoding="utf-8") as file:
                 await file.write(json.dumps(initial_data, indent=2))
         except OSError as err:
-            _LOGGER.error("Failed creating initial custom zones file %s: %s", custom_path, err)
+            _LOGGER.error(
+                "Failed creating initial custom zones file %s: %s", custom_path, err
+            )
 
     return custom_path
 
@@ -69,7 +70,11 @@ def _generate_circle_polygon(
     ring: list[list[float]] = []
     lat_rad = math.radians(lat)
     lat_delta = radius / 111320.0
-    lon_delta = radius / (111320.0 * math.cos(lat_rad)) if math.cos(lat_rad) != 0 else radius / 111320.0
+    lon_delta = (
+        radius / (111320.0 * math.cos(lat_rad))
+        if math.cos(lat_rad) != 0
+        else radius / 111320.0
+    )
 
     for i in range(num_points):
         angle = (2.0 * math.pi * i) / num_points
@@ -148,9 +153,7 @@ async def async_remove_custom_zone(hass: HomeAssistant, name: str) -> bool:
 
     features = data.get("features", [])
     original_count = len(features)
-    new_features = [
-        f for f in features if f.get("properties", {}).get("name") != name
-    ]
+    new_features = [f for f in features if f.get("properties", {}).get("name") != name]
 
     if len(new_features) == original_count:
         return False
@@ -188,7 +191,9 @@ async def async_rename_custom_zone(
     other_names = {
         f.get("properties", {}).get("name")
         for f in features
-        if f is not target_feature and f.get("properties") and f["properties"].get("name")
+        if f is not target_feature
+        and f.get("properties")
+        and f["properties"].get("name")
     }
 
     final_new_name = new_name

@@ -1,12 +1,11 @@
 # custom_components/geozones/__init__.py
 """The GeoZones Component initialization runtime orchestration module."""
 
-from datetime import datetime
 import logging
+from datetime import datetime
 from typing import Any
 
 import voluptuous as vol
-
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant, ServiceCall
@@ -70,7 +69,9 @@ async def async_setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:
                 )
             state = hass.states.get(entity_id)
             if state is None:
-                raise ServiceValidationError(f"Target entity {entity_id} was not found.")
+                raise ServiceValidationError(
+                    f"Target entity {entity_id} was not found."
+                )
             lat = state.attributes.get("latitude")
             lon = state.attributes.get("longitude")
             if lat is None or lon is None:
@@ -78,9 +79,7 @@ async def async_setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:
                     f"Target entity {entity_id} does not currently have valid latitude and longitude attributes."
                 )
 
-        await async_add_custom_zone(
-            hass, name, float(lat), float(lon), float(radius)
-        )
+        await async_add_custom_zone(hass, name, float(lat), float(lon), float(radius))
         await _async_reprocess_all_entries(hass)
 
     async def handle_remove_zone(call: ServiceCall) -> None:
@@ -165,14 +164,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     async def nightly_refresh_callback(now: datetime) -> None:
         """Automated scheduled update tracking execution pass handle context."""
-        _LOGGER.info(
-            "Starting scheduled nightly update sweep for GeoZones structures"
-        )
+        _LOGGER.info("Starting scheduled nightly update sweep for GeoZones structures")
         source_tracker = entry.data[CONF_SOURCE_TRACKER]
         geojson_source = entry.data[CONF_GEOJSON_SOURCE]
-        use_custom = entry.data.get(
-            CONF_USE_CUSTOM_ZONES, DEFAULT_USE_CUSTOM_ZONES
-        )
+        use_custom = entry.data.get(CONF_USE_CUSTOM_ZONES, DEFAULT_USE_CUSTOM_ZONES)
         entity_id_slug = source_tracker.split(".")[-1]
 
         path = await fetch_and_process_geojson(
@@ -194,9 +189,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Gracefully dismantle elements when entries are removed or modified."""
-    unload_ok = await hass.config_entries.async_unload_platforms(
-        entry, PLATFORMS
-    )
+    unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
 
     if unload_ok and entry.entry_id in hass.data[DOMAIN]:
         unsub_timer, unsub_options = hass.data[DOMAIN].pop(entry.entry_id)
