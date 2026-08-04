@@ -6,6 +6,7 @@ from datetime import datetime
 from typing import Any
 
 import voluptuous as vol
+
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant, ServiceCall
@@ -39,6 +40,21 @@ PLATFORMS: list[Platform] = [
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
 
+def _get_active_select_zone_name(hass: HomeAssistant, target_entity_id: str | None) -> str | None:
+    """Extract selected zone name from target or any registered select entity."""
+    if target_entity_id:
+        state = hass.states.get(target_entity_id)
+        if state and state.domain == "select" and state.state not in (None, "unknown", "unavailable"):
+            return state.state
+
+    # Search all domain select entities as fallback
+    for state in hass.states.async_all("select"):
+        if state.entity_id.startswith("select.geozones_") and state.state not in (None, "unknown", "unavailable"):
+            return state.state
+
+    return None
+
+
 async def _async_reprocess_all_entries(hass: HomeAssistant) -> None:
     """Reprocess all active GeoZones config entries and notify listening entities."""
     for entry in hass.config_entries.async_entries(DOMAIN):
@@ -60,11 +76,14 @@ async def async_setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:
 
     async def handle_add_zone(call: ServiceCall) -> None:
         """Handle the add_zone custom service execution."""
-        name: str = call.data["name"]
+        name: str | None = call.data.get("name")
         radius: float = float(call.data.get("radius", 50.0))
         lat: float | None = call.data.get("latitude")
         lon: float | None = call.data.get("longitude")
         entity_id: str | None = call.data.get("entity_id")
+
+        if not name:
+            name = f"Marked Spot {datetime.now().strftime('%Y-%m-%d %H:%M')}"
 
         if lat is None or lon is None:
             if not entity_id:
@@ -88,7 +107,17 @@ async def async_setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:
 
     async def handle_remove_zone(call: ServiceCall) -> None:
         """Handle the remove_zone custom service execution."""
-        name: str = call.data["name"]
+        name: str | None = call.data.get("name")
+        entity_id: str | None = call.data.get("entity_id")
+
+        if not name:
+            name = _get_active_select_zone_name(hass, entity_id)
+
+        if not name:
+            raise ServiceValidationError(
+                "Zone name was not specified and no custom zone is currently selected in the dropdown."
+            )
+
         removed = await async_remove_custom_zone(hass, name)
         if not removed:
             _LOGGER.warning(
@@ -100,8 +129,18 @@ async def async_setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:
 
     async def handle_rename_zone(call: ServiceCall) -> None:
         """Handle the rename_zone custom service execution."""
-        name: str = call.data["name"]
+        name: str | None = call.data.get("name")
         new_name: str = call.data["new_name"]
+        entity_id: str | None = call.data.get("entity_id")
+
+        if not name:
+            name = _get_active_select_zone_name(hass, entity_id)
+
+        if not name:
+            raise ServiceValidationError(
+                "Target zone name was not specified and no custom zone is currently selected in the dropdown."
+            )
+
         renamed = await async_rename_custom_zone(hass, name, new_name)
         if not renamed:
             _LOGGER.warning(
@@ -121,7 +160,7 @@ async def async_setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:
         handle_add_zone,
         schema=vol.Schema(
             {
-                vol.Required("name"): cv.string,
+                vol.Optional("name"): cv.string,
                 vol.Optional("entity_id"): cv.entity_id,
                 vol.Optional("latitude"): vol.Coerce(float),
                 vol.Optional("longitude"): vol.Coerce(float),
@@ -134,7 +173,12 @@ async def async_setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:
         DOMAIN,
         "remove_zone",
         handle_remove_zone,
-        schema=vol.Schema({vol.Required("name"): cv.string}),
+        schema=vol.Schema(
+            {
+                vol.Optional("name"): cv.string,
+                vol.Optional("entity_id"): cv.entity_id,
+            }
+        ),
     )
 
     hass.services.async_register(
@@ -143,8 +187,9 @@ async def async_setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:
         handle_rename_zone,
         schema=vol.Schema(
             {
-                vol.Required("name"): cv.string,
+                vol.Optional("name"): cv.string,
                 vol.Required("new_name"): cv.string,
+                vol.Optional("entity_id"): cv.entity_id,
             }
         ),
     )
