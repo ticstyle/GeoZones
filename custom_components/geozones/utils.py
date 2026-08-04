@@ -63,6 +63,27 @@ async def async_ensure_custom_zones_file(hass: HomeAssistant) -> str:
     return custom_path
 
 
+async def async_get_custom_zone_names(hass: HomeAssistant) -> list[str]:
+    """Retrieve the list of custom zone names from the shared custom zones file."""
+    custom_path = await async_ensure_custom_zones_file(hass)
+    try:
+        async with aiofiles.open(custom_path, mode="r", encoding="utf-8") as file:
+            content = await file.read()
+            data = json.loads(content)
+    except (OSError, json.JSONDecodeError):
+        return []
+
+    features = data.get("features", [])
+    names: list[str] = []
+    for f in features:
+        props = f.get("properties", {}) or {}
+        name = props.get("name")
+        if name and isinstance(name, str):
+            names.append(name)
+
+    return sorted(names)
+
+
 def _generate_circle_polygon(
     lat: float, lon: float, radius: float = 50.0, num_points: int = 32
 ) -> list[list[float]]:
