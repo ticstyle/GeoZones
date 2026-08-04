@@ -5,7 +5,6 @@ import logging
 import os
 
 import aiofiles  # type: ignore[import-untyped]
-
 from homeassistant.components.frontend import (
     async_register_built_in_panel,
     async_remove_panel,
