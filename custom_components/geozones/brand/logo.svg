@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 512">
+  <!-- Full Logo Background matching the Icon's brightness level -->
+  <rect width="1600" height="512" rx="120" fill="#34363C"/>
+
+  <!-- Left Side Integrated Icon Graphic Asset (Scaled up & balanced) -->
+  <g transform="translate(-15, 0)">
+    <g transform="translate(256, 256) scale(1.22) translate(-256, -256)">
+      <!-- Shifted Outer 7-Point Polygon Field -->
+      <polygon points="220,75 370,110 440,230 380,380 210,420 100,320 110,180" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-opacity="0.15" stroke-linejoin="round"/>
+      
+      <!-- Secondary Intermediate Multi-Zone Field -->
+      <polygon points="230,120 340,150 390,240 340,340 220,360 140,290 150,190" fill="#FF6B35" fill-opacity="0.1" stroke="#FF6B35" stroke-width="2.5" stroke-opacity="0.5" stroke-linejoin="round"/>
+      
+      <!-- Primary Micro-Zone Match (Solid Safety Orange 5-Point Polygon + Bold White Border) -->
+      <polygon points="240,170 315,200 295,280 215,270 190,205" fill="#FF6B35" stroke="#FFFFFF" stroke-width="4" stroke-linejoin="round"/>
+      
+      <!-- Traveler Silhouette (Stark White) -->
+      <circle cx="251" cy="204" r="9" fill="#FFFFFF"/>
+      <path d="M233,232 C233,222 239,217 251,217 C263,217 269,222 269,232 Z" fill="#FFFFFF"/>
+    </g>
+  </g>
+
+  <!-- Typography Alignment Rules -->
+  <text x="510" y="265" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-weight="900" font-size="190" fill="#FFFFFF">GeoZones</text>
+  <text x="515" y="355" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-weight="700" font-size="42" fill="#FF6B35" letter-spacing="3">PRIORITIZED MULTI-ZONE GEOMETRY ENGINE</text>
+  <text x="515" y="410" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-weight="500" font-size="26" fill="#9CA3AF" letter-spacing="1">HACS COMPATIBLE // CUSTOM DEVICE TRACKING COMPONENT</text>
+</svg>
