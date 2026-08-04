@@ -24,9 +24,7 @@ async def async_setup_entry(
     source_tracker = entry.data[CONF_SOURCE_TRACKER]
     entity_id_slug = source_tracker.split(".")[-1]
 
-    async_add_entities(
-        [GeoZoneCustomZonesSelect(hass, entry, entity_id_slug)]
-    )
+    async_add_entities([GeoZoneCustomZonesSelect(hass, entry, entity_id_slug)])
 
 
 class GeoZoneCustomZonesSelect(SelectEntity, RestoreEntity):

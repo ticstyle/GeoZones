@@ -72,7 +72,9 @@ class GeoZoneMarkLocationButton(ButtonEntity):
         """Execute zone creation at current tracker coordinates when pressed."""
         tracker_state = self.hass.states.get(self._source_tracker)
         if not tracker_state:
-            raise ServiceValidationError(f"Tracker {self._source_tracker} was not found.")
+            raise ServiceValidationError(
+                f"Tracker {self._source_tracker} was not found."
+            )
 
         lat = tracker_state.attributes.get("latitude")
         lon = tracker_state.attributes.get("longitude")
@@ -83,7 +85,9 @@ class GeoZoneMarkLocationButton(ButtonEntity):
             )
 
         name = f"Marked Spot {dt_util.now().strftime('%Y-%m-%d %H:%M')}"
-        await async_add_custom_zone(self.hass, name, float(lat), float(lon), radius=50.0)
+        await async_add_custom_zone(
+            self.hass, name, float(lat), float(lon), radius=50.0
+        )
 
         # Reprocess all entries and fire dispatcher signals
         for entry in self.hass.config_entries.async_entries(DOMAIN):
@@ -92,7 +96,9 @@ class GeoZoneMarkLocationButton(ButtonEntity):
             use_custom = entry.data.get("use_custom_zones", True)
             slug = src.split(".")[-1]
 
-            path = await fetch_and_process_geojson(self.hass, source_file, slug, use_custom)
+            path = await fetch_and_process_geojson(
+                self.hass, source_file, slug, use_custom
+            )
             if path:
                 async_dispatcher_send(self.hass, f"{DOMAIN}_reload_{entry.entry_id}")
 
@@ -132,7 +138,8 @@ class GeoZoneRemoveZoneButton(ButtonEntity):
 
         target_zone = (
             select_state.state
-            if select_state and select_state.state not in (None, "unknown", "unavailable")
+            if select_state
+            and select_state.state not in (None, "unknown", "unavailable")
             else None
         )
 
@@ -154,7 +161,9 @@ class GeoZoneRemoveZoneButton(ButtonEntity):
             use_custom = entry.data.get("use_custom_zones", True)
             slug = src.split(".")[-1]
 
-            path = await fetch_and_process_geojson(self.hass, source_file, slug, use_custom)
+            path = await fetch_and_process_geojson(
+                self.hass, source_file, slug, use_custom
+            )
             if path:
                 async_dispatcher_send(self.hass, f"{DOMAIN}_reload_{entry.entry_id}")
 
@@ -196,6 +205,8 @@ class GeoZoneReloadButton(ButtonEntity):
             use_custom = entry.data.get("use_custom_zones", True)
             slug = src.split(".")[-1]
 
-            path = await fetch_and_process_geojson(self.hass, source_file, slug, use_custom)
+            path = await fetch_and_process_geojson(
+                self.hass, source_file, slug, use_custom
+            )
             if path:
                 async_dispatcher_send(self.hass, f"{DOMAIN}_reload_{entry.entry_id}")
