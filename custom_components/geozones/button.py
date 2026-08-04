@@ -1,7 +1,6 @@
 # custom_components/geozones/button.py
 """Button platform entities for instant GeoZones location marking and reloading."""
 
-from datetime import datetime
 import logging
 
 from homeassistant.components.button import ButtonEntity
@@ -9,11 +8,12 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ServiceValidationError
 from homeassistant.helpers.device_registry import DeviceInfo
+from homeassistant.helpers.dispatcher import async_dispatcher_send
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.util import dt as dt_util
 
 from .const import CONF_SOURCE_TRACKER, DOMAIN
 from .utils import async_add_custom_zone, fetch_and_process_geojson
-from homeassistant.helpers.dispatcher import async_dispatcher_send
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -77,7 +77,7 @@ class GeoZoneMarkLocationButton(ButtonEntity):
                 f"Tracker {self._source_tracker} does not have valid GPS coordinates."
             )
 
-        name = f"Marked Spot {datetime.now().strftime('%Y-%m-%d %H:%M')}"
+        name = f"Marked Spot {dt_util.now().strftime('%Y-%m-%d %H:%M')}"
         await async_add_custom_zone(self.hass, name, float(lat), float(lon), radius=50.0)
 
         # Reprocess all entries and fire dispatcher signals
