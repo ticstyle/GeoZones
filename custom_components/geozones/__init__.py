@@ -1,13 +1,14 @@
 # custom_components/geozones/__init__.py
 """The GeoZones Component initialization runtime orchestration module."""
 
+from datetime import datetime
 import logging
 import os
-from datetime import datetime
 from typing import Any
 
 import aiofiles  # type: ignore[import-untyped]
 import voluptuous as vol
+
 from homeassistant.components.frontend import (
     async_register_built_in_panel,
     async_remove_panel,
@@ -51,10 +52,9 @@ DASHBOARD_REL_PATH = "custom_components/geozones/geozones_dashboard.yaml"
 def _get_active_select_zone_name(hass: HomeAssistant) -> str | None:
     """Extract selected zone name from any registered GeoZones select entity."""
     for state in hass.states.async_all("select"):
-        if state.entity_id.startswith("select.geozones_") and state.state not in (
-            None,
-            "unknown",
-            "unavailable",
+        if (
+            state.entity_id.startswith("select.geozones_")
+            and state.state not in (None, "unknown", "unavailable")
         ):
             return state.state
     return None
@@ -81,37 +81,33 @@ async def _async_generate_dashboard_yaml(hass: HomeAssistant) -> str:
     os.makedirs(os.path.dirname(dashboard_path), exist_ok=True)
 
     entities_yaml_lines: list[str] = []
+    entries = hass.config_entries.async_entries(DOMAIN)
 
-    for entry in hass.config_entries.async_entries(DOMAIN):
-        source_tracker = entry.data.get(CONF_SOURCE_TRACKER, "")
-        if not source_tracker:
-            continue
-        slug = source_tracker.split(".")[-1]
-
-        entities_yaml_lines.extend(
-            [
-                (
-                    f"          - entity: select.geozones_{slug}_custom_zones\n"
-                    f"            name: Select Custom Zone ({slug})"
-                ),
-                (
-                    f"          - entity: button.geozones_{slug}_mark_location\n"
-                    f"            name: Mark Location ({slug})"
-                ),
-                (
-                    f"          - entity: button.geozones_{slug}_remove_zone\n"
-                    f"            name: Remove Selected Zone ({slug})"
-                ),
-                (
-                    f"          - entity: button.geozones_{slug}_reload\n"
-                    f"            name: Reload Layer ({slug})"
-                ),
-                "          - type: divider",
-            ]
-        )
-
-    if entities_yaml_lines and entities_yaml_lines[-1] == "          - type: divider":
-        entities_yaml_lines.pop()
+    if entries:
+        first_entry = entries[0]
+        source_tracker = first_entry.data.get(CONF_SOURCE_TRACKER, "")
+        if source_tracker:
+            slug = source_tracker.split(".")[-1]
+            entities_yaml_lines.extend(
+                [
+                    (
+                        f"          - entity: select.geozones_{slug}_custom_zones\n"
+                        "            name: Select Custom Zone"
+                    ),
+                    (
+                        f"          - entity: button.geozones_{slug}_mark_location\n"
+                        "            name: Mark Current Location"
+                    ),
+                    (
+                        f"          - entity: button.geozones_{slug}_remove_zone\n"
+                        "            name: Remove Selected Zone"
+                    ),
+                    (
+                        f"          - entity: button.geozones_{slug}_reload\n"
+                        "            name: Reload Layer"
+                    ),
+                ]
+            )
 
     if not entities_yaml_lines:
         entities_block = "          - entity: device_tracker.geozones"
@@ -120,42 +116,63 @@ async def _async_generate_dashboard_yaml(hass: HomeAssistant) -> str:
 
     yaml_content = f"""title: GeoZones
 views:
-  - title: Overview
-    path: overview
+  - title: GeoZonesOverview
+    path: geozones-overview
     icon: mdi:map-marker-radius
     type: masonry
     cards:
       - type: markdown
         title: "📍 Active Tracking Overview"
-        content: >-
-          {{% set trackers = states.device_tracker
-             | selectattr('entity_id', 'search', '^device_tracker\\\\.geozones_')
-             | list %}}
-          {{% if trackers | length > 0 %}}
-            {{% for t in trackers %}}
-              ### 📱 {{{{ t.name }}}}
-              * **Current Zone:** `{{{{ t.state }}}}`
-              * **Source Target:** `{{{{ state_attr(t.entity_id, 'source_entity_id') }}}}`
+        content: |
+          {{%- set trackers = states.device_tracker | selectattr('entity_id', 'search', '^device_tracker\\\\.geozones_') | list -%}}
+          {{%- if trackers | length > 0 -%}}
+          {{%- for t in trackers %}}
+          ### 📱 {{{{ t.name }}}}
+          * **Current Zone:** `{{{{ t.state }}}}`
+          * **Source Target:** `{{{{ state_attr(t.entity_id, 'source_entity_id') or t.entity_id }}}}`
 
-              **Active inside zones:**
-              {{% set zones = state_attr(t.entity_id, 'containing_zones') %}}
-              {{% if zones and zones | length > 0 %}}
-                {{% for zone in zones %}}- {{{{ zone }}}}
-                {{% endfor %}}
-              {{% else %}}
-                *Not inside any custom zones.*
-              {{% endif %}}
-              {{% if not loop.last %}}---{{% endif %}}
-            {{% endfor %}}
-          {{% else %}}
-            *No active GeoZones trackers detected.*
-          {{% endif %}}
+          **Active inside zones:**
+          {{%- set zones = state_attr(t.entity_id, 'containing_zones') -%}}
+          {{%- if zones and zones | length > 0 -%}}
+          {{%- for zone in zones %}}
+          - {{{{ zone }}}}
+          {{%- endfor -%}}
+          {{%- else %}}
+          *Not inside any custom zones.*
+          {{%- endif %}}
+
+          {{%- if not loop.last %}}
+          ---
+          {{%- endif %}}
+          {{%- endfor -%}}
+          {{%- else %}}
+          *No active GeoZones trackers detected.*
+          {{%- endif -%}}
 
       - type: entities
         title: "⚙️ Custom Zone Manager"
         show_header_toggle: false
         entities:
 {entities_block}
+
+      - type: markdown
+        title: "🗺️ All Loaded Zones"
+        content: |
+          {{%- set ns = namespace(zones=[]) -%}}
+          {{%- set trackers = states.device_tracker | selectattr('entity_id', 'search', '^device_tracker\\\\.geozones_') | list -%}}
+          {{%- for t in trackers -%}}
+            {{%- set cz = state_attr(t.entity_id, 'containing_zones') or [] -%}}
+            {{%- set lz = state_attr(t.entity_id, 'loaded_zones') or state_attr(t.entity_id, 'all_zones') or state_attr(t.entity_id, 'zones') or [] -%}}
+            {{%- set ns.zones = ns.zones + cz + lz -%}}
+          {{%- endfor -%}}
+          {{%- set unique_zones = ns.zones | unique | sort -%}}
+          {{%- if unique_zones | length > 0 -%}}
+          {{%- for z in unique_zones %}}
+          - {{{{ z }}}}
+          {{%- endfor -%}}
+          {{%- else %}}
+          *No loaded zones detected across active trackers.*
+          {{%- endif -%}}
 """
 
     async with aiofiles.open(dashboard_path, mode="w", encoding="utf-8") as file:
@@ -302,13 +319,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         try:
             rel_path = await _async_generate_dashboard_yaml(hass)
 
-            # Register with Lovelace backend dashboard manager
             if "lovelace" in hass.data and hasattr(hass.data["lovelace"], "dashboards"):
                 hass.data["lovelace"].dashboards["geozones"] = LovelaceYAML(
                     hass, "geozones", {"mode": "yaml", "filename": rel_path}
                 )
 
-            # Register panel in sidebar frontend
             async_register_built_in_panel(
                 hass,
                 component_name="lovelace",
