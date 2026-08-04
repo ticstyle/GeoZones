@@ -53,13 +53,6 @@ remove_zone:
       required: false
       selector:
         text:
-    entity_id:
-      name: Target Select Entity
-      description: Optional GeoZones select entity to target.
-      required: false
-      selector:
-        entity:
-          domain: select
 
 rename_zone:
   name: Rename zone
@@ -77,13 +70,6 @@ rename_zone:
       required: true
       selector:
         text:
-    entity_id:
-      name: Target Select Entity
-      description: Optional GeoZones select entity to target.
-      required: false
-      selector:
-        entity:
-          domain: select
 
 reload:
   name: Reload GeoZones
