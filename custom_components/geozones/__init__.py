@@ -6,6 +6,10 @@ from datetime import datetime
 from typing import Any
 
 import voluptuous as vol
+from homeassistant.components.frontend import (
+    async_register_built_in_panel,
+    async_remove_panel,
+)
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant, ServiceCall
@@ -17,8 +21,10 @@ from homeassistant.util import dt as dt_util
 
 from .const import (
     CONF_GEOJSON_SOURCE,
+    CONF_SHOW_IN_SIDEBAR,
     CONF_SOURCE_TRACKER,
     CONF_USE_CUSTOM_ZONES,
+    DEFAULT_SHOW_IN_SIDEBAR,
     DEFAULT_USE_CUSTOM_ZONES,
     DOMAIN,
 )
@@ -200,6 +206,19 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     await async_ensure_custom_zones_file(hass)
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
+    show_sidebar = entry.data.get(CONF_SHOW_IN_SIDEBAR, DEFAULT_SHOW_IN_SIDEBAR)
+    if show_sidebar and not hass.data[DOMAIN].get("panel_registered"):
+        async_register_built_in_panel(
+            hass,
+            component_name="lovelace",
+            sidebar_title="GeoZones",
+            sidebar_icon="mdi:map-marker-path",
+            frontend_url_path="geozones",
+            config={"mode": "yaml"},
+            require_admin=False,
+        )
+        hass.data[DOMAIN]["panel_registered"] = True
+
     async def nightly_refresh_callback(now: datetime) -> None:
         """Automated scheduled update tracking execution pass handle context."""
         _LOGGER.info("Starting scheduled nightly update sweep for GeoZones structures")
@@ -233,6 +252,17 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         unsub_timer, unsub_options = hass.data[DOMAIN].pop(entry.entry_id)
         unsub_timer()
         unsub_options()
+
+    if unload_ok:
+        remaining_sidebar_entries = [
+            e
+            for e in hass.config_entries.async_entries(DOMAIN)
+            if e.entry_id != entry.entry_id
+            and e.data.get(CONF_SHOW_IN_SIDEBAR, DEFAULT_SHOW_IN_SIDEBAR)
+        ]
+        if not remaining_sidebar_entries and hass.data[DOMAIN].get("panel_registered"):
+            async_remove_panel(hass, "geozones")
+            hass.data[DOMAIN]["panel_registered"] = False
 
     return unload_ok
 
