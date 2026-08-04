@@ -75,13 +75,12 @@ async def _async_reprocess_all_entries(hass: HomeAssistant) -> None:
 async def _async_ensure_dashboard_config(hass: HomeAssistant) -> None:
     """Ensure the sidebar dashboard is pre-populated with default cards if not already configured."""
     store = Store[dict[str, Any]](hass, 1, "lovelace.geozones")
-    existing_config = await store.async_load()
+    existing_data = await store.async_load()
 
     has_cards = False
-    if existing_config and isinstance(existing_config, dict):
-        views = existing_config.get("views", [])
-        if not views and "config" in existing_config:
-            views = existing_config.get("config", {}).get("views", [])
+    if existing_data and isinstance(existing_data, dict):
+        config = existing_data.get("config", existing_data)
+        views = config.get("views", [])
         for view in views:
             if view.get("cards"):
                 has_cards = True
@@ -156,28 +155,30 @@ async def _async_ensure_dashboard_config(hass: HomeAssistant) -> None:
     )
 
     default_dashboard = {
-        "title": "GeoZones",
-        "views": [
-            {
-                "title": "Overview",
-                "path": "overview",
-                "icon": "mdi:map-marker-radius",
-                "type": "masonry",
-                "cards": [
-                    {
-                        "type": "markdown",
-                        "title": "📍 Active Tracking Overview",
-                        "content": markdown_content,
-                    },
-                    {
-                        "type": "entities",
-                        "title": "⚙️ Custom Zone Manager",
-                        "show_header_toggle": False,
-                        "entities": entities_list,
-                    },
-                ],
-            }
-        ],
+        "config": {
+            "title": "GeoZones",
+            "views": [
+                {
+                    "title": "Overview",
+                    "path": "overview",
+                    "icon": "mdi:map-marker-radius",
+                    "type": "masonry",
+                    "cards": [
+                        {
+                            "type": "markdown",
+                            "title": "📍 Active Tracking Overview",
+                            "content": markdown_content,
+                        },
+                        {
+                            "type": "entities",
+                            "title": "⚙️ Custom Zone Manager",
+                            "show_header_toggle": False,
+                            "entities": entities_list,
+                        },
+                    ],
+                }
+            ],
+        }
     }
 
     await store.async_save(default_dashboard)
