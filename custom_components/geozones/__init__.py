@@ -1,11 +1,12 @@
 # custom_components/geozones/__init__.py
 """The GeoZones Component initialization runtime orchestration module."""
 
-import logging
 from datetime import datetime
+import logging
 from typing import Any
 
 import voluptuous as vol
+
 from homeassistant.components.frontend import (
     async_register_built_in_panel,
     async_remove_panel,
@@ -49,10 +50,9 @@ CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 def _get_active_select_zone_name(hass: HomeAssistant) -> str | None:
     """Extract selected zone name from any registered GeoZones select entity."""
     for state in hass.states.async_all("select"):
-        if state.entity_id.startswith("select.geozones_") and state.state not in (
-            None,
-            "unknown",
-            "unavailable",
+        if (
+            state.entity_id.startswith("select.geozones_")
+            and state.state not in (None, "unknown", "unavailable")
         ):
             return state.state
     return None
@@ -213,7 +213,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             component_name="lovelace",
             sidebar_title="GeoZones",
             sidebar_icon="mdi:map-marker-path",
-            url_path="geozones",
+            frontend_url_path="geozones",
             config={"mode": "yaml"},
             require_admin=False,
         )
