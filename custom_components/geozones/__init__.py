@@ -1,12 +1,11 @@
 # custom_components/geozones/__init__.py
 """The GeoZones Component initialization runtime orchestration module."""
 
-from datetime import datetime
 import logging
+from datetime import datetime
 from typing import Any
 
 import voluptuous as vol
-
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant, ServiceCall
@@ -41,16 +40,26 @@ PLATFORMS: list[Platform] = [
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
 
-def _get_active_select_zone_name(hass: HomeAssistant, target_entity_id: str | None) -> str | None:
+def _get_active_select_zone_name(
+    hass: HomeAssistant, target_entity_id: str | None
+) -> str | None:
     """Extract selected zone name from target or any registered select entity."""
     if target_entity_id:
         state = hass.states.get(target_entity_id)
-        if state and state.domain == "select" and state.state not in (None, "unknown", "unavailable"):
+        if (
+            state
+            and state.domain == "select"
+            and state.state not in (None, "unknown", "unavailable")
+        ):
             return state.state
 
     # Search all domain select entities as fallback
     for state in hass.states.async_all("select"):
-        if state.entity_id.startswith("select.geozones_") and state.state not in (None, "unknown", "unavailable"):
+        if state.entity_id.startswith("select.geozones_") and state.state not in (
+            None,
+            "unknown",
+            "unavailable",
+        ):
             return state.state
 
     return None
