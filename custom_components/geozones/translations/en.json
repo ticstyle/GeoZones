@@ -14,16 +14,18 @@
       },
       "advanced": {
         "title": "Configure Advanced Tracking Settings",
-        "description": "Configure safety filters and Wi-Fi presence anchoring to prevent GPS drift. We have automatically analyzed your selected target device and pre-selected the matching Wi-Fi sensor if one was found.",
+        "description": "Configure safety filters, Wi-Fi presence anchoring, and secondary custom zone imports. We have automatically analyzed your selected target device and pre-selected the matching Wi-Fi sensor if one was found.",
         "data": {
           "max_gps_accuracy": "Maximum GPS Accuracy (meters)",
           "wifi_ssid_sensor": "Wi-Fi SSID Sensor (Optional)",
-          "home_ssids": "Home Wi-Fi SSIDs (Optional)"
+          "home_ssids": "Home Wi-Fi SSIDs (Optional)",
+          "use_custom_zones": "Include Shared Custom Zones File"
         },
         "data_description": {
           "max_gps_accuracy": "Location updates with accuracy worse than this threshold will be filtered out to prevent GPS drift. (default is 50 meters)",
           "wifi_ssid_sensor": "Select your mobile companion app's Wi-Fi connection sensor.",
-          "home_ssids": "Add your home Wi-Fi networks. Connecting to any of these will instantly anchor your state to your home configuration footprint."
+          "home_ssids": "Add your home Wi-Fi networks. Connecting to any of these will instantly anchor your state to your home configuration footprint.",
+          "use_custom_zones": "Merge custom dynamic zones saved in /config/geozones/geozones_custom_zones.geojson into this tracker layer."
         }
       },
       "reconfigure": {
@@ -34,13 +36,15 @@
           "geojson_source": "GeoJSON File Source URL / Path",
           "max_gps_accuracy": "Maximum GPS Accuracy (meters)",
           "wifi_ssid_sensor": "Wi-Fi SSID Sensor (Optional)",
-          "home_ssids": "Home Wi-Fi SSIDs (Optional)"
+          "home_ssids": "Home Wi-Fi SSIDs (Optional)",
+          "use_custom_zones": "Include Shared Custom Zones File"
         },
         "data_description": {
           "geojson_source": "e.g., domain.com/zones.json or a local path like /geozones/sweden.geojson",
           "max_gps_accuracy": "Location updates with accuracy worse than this threshold will be filtered out to prevent GPS drift. (default is 50 meters)",
           "wifi_ssid_sensor": "Select your mobile companion app's Wi-Fi connection sensor.",
-          "home_ssids": "Add your home Wi-Fi networks. Connecting to any of these will instantly anchor your state to your home configuration footprint."
+          "home_ssids": "Add your home Wi-Fi networks. Connecting to any of these will instantly anchor your state to your home configuration footprint.",
+          "use_custom_zones": "Merge custom dynamic zones saved in /config/geozones/geozones_custom_zones.geojson into this tracker layer."
         }
       }
     },
@@ -62,13 +66,15 @@
           "geojson_source": "GeoJSON File Source URL / Path",
           "max_gps_accuracy": "Maximum GPS Accuracy (meters)",
           "wifi_ssid_sensor": "Wi-Fi SSID Sensor (Optional)",
-          "home_ssids": "Home Wi-Fi SSIDs (Optional)"
+          "home_ssids": "Home Wi-Fi SSIDs (Optional)",
+          "use_custom_zones": "Include Shared Custom Zones File"
         },
         "data_description": {
           "geojson_source": "e.g., domain.com/zones.json or a local path like /geozones/sweden.geojson",
           "max_gps_accuracy": "Location updates with accuracy worse than this threshold will be filtered out to prevent GPS drift. (default is 50 meters)",
           "wifi_ssid_sensor": "Select your mobile companion app's Wi-Fi connection sensor.",
-          "home_ssids": "Add your home Wi-Fi networks. Connecting to any of these will instantly anchor your state to your home configuration footprint."
+          "home_ssids": "Add your home Wi-Fi networks. Connecting to any of these will instantly anchor your state to your home configuration footprint.",
+          "use_custom_zones": "Merge custom dynamic zones saved in /config/geozones/geozones_custom_zones.geojson into this tracker layer."
         }
       }
     },

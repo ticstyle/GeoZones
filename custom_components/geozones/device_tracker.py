@@ -1,3 +1,4 @@
+# custom_components/geozones/device_tracker.py
 """Platform tracking entity binding structures for GeoZones state evaluation mappings."""
 
 import json
@@ -29,9 +30,9 @@ from .const import (
     CONF_MAX_GPS_ACCURACY,
     CONF_SOURCE_TRACKER,
     CONF_WIFI_SSID_SENSOR,
+    DEFAULT_HOME_ZONE,
     DOMAIN,
     STORAGE_DIR,
-    DEFAULT_HOME_ZONE,
 )
 from .utils import point_in_polygon
 
@@ -107,9 +108,12 @@ class GeoZoneTrackerEntity(TrackerEntity, RestoreEntity):
                 coords = geom.get("coordinates", [])
                 zone_name = props.get("name")
 
-                if zone_name and geom_type == "Polygon":
-                    if point_in_polygon(float(home_lon), float(home_lat), coords):
-                        return str(zone_name)
+                if (
+                    zone_name
+                    and geom_type == "Polygon"
+                    and point_in_polygon(float(home_lon), float(home_lat), coords)
+                ):
+                    return str(zone_name)
 
         return default_name
 
@@ -124,7 +128,7 @@ class GeoZoneTrackerEntity(TrackerEntity, RestoreEntity):
             with open(target_path, encoding="utf-8") as file:
                 data = json.load(file)
                 return data.get("features", [])
-        except Exception as err:
+        except (OSError, ValueError, json.JSONDecodeError) as err:
             _LOGGER.error("Failed to read spatial asset registry records: %s", err)
             return []
 
