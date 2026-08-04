@@ -12,6 +12,7 @@ from homeassistant.components.frontend import (
     async_register_built_in_panel,
     async_remove_panel,
 )
+from homeassistant.components.lovelace.dashboard import LovelaceYAML
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant, ServiceCall
@@ -300,6 +301,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         hass.data[DOMAIN]["panel_registered"] = True
         try:
             rel_path = await _async_generate_dashboard_yaml(hass)
+
+            # Register with Lovelace backend dashboard manager
+            if "lovelace" in hass.data and hasattr(hass.data["lovelace"], "dashboards"):
+                hass.data["lovelace"].dashboards["geozones"] = LovelaceYAML(
+                    hass, "geozones", {"mode": "yaml", "filename": rel_path}
+                )
+
+            # Register panel in sidebar frontend
             async_register_built_in_panel(
                 hass,
                 component_name="lovelace",
@@ -310,7 +319,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                     "mode": "yaml",
                     "title": "GeoZones",
                     "icon": "mdi:map-marker-path",
-                    "filename": rel_path,
                 },
                 require_admin=False,
             )
@@ -362,6 +370,8 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         ]
         if not remaining_entries and hass.data[DOMAIN].get("panel_registered"):
             async_remove_panel(hass, "geozones")
+            if "lovelace" in hass.data and hasattr(hass.data["lovelace"], "dashboards"):
+                hass.data["lovelace"].dashboards.pop("geozones", None)
             hass.data[DOMAIN]["panel_registered"] = False
 
     return unload_ok
