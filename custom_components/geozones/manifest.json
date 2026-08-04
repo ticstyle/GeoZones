@@ -1,11 +1,11 @@
 {
   "domain": "geozones",
   "name": "GeoZones",
+  "after_dependencies": ["lovelace"],
   "codeowners": ["@ticstyle"],
   "config_flow": true,
   "documentation": "https://github.com/ticstyle/GeoZones",
   "iot_class": "local_polling",
   "issue_tracker": "https://github.com/ticstyle/GeoZones/issues",
-  "after_dependencies": ["lovelace"],
   "version": "1.4.9"
 }
