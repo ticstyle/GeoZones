@@ -1,11 +1,12 @@
 # custom_components/geozones/__init__.py
 """The GeoZones Component initialization runtime orchestration module."""
 
-import logging
 from datetime import datetime
+import logging
 from typing import Any
 
 import voluptuous as vol
+
 from homeassistant.components.frontend import (
     async_register_built_in_panel,
     async_remove_panel,
@@ -17,6 +18,7 @@ from homeassistant.exceptions import ServiceValidationError
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.dispatcher import async_dispatcher_send
 from homeassistant.helpers.event import async_track_time_change
+from homeassistant.helpers.storage import Store
 from homeassistant.util import dt as dt_util
 
 from .const import (
@@ -47,10 +49,9 @@ CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 def _get_active_select_zone_name(hass: HomeAssistant) -> str | None:
     """Extract selected zone name from any registered GeoZones select entity."""
     for state in hass.states.async_all("select"):
-        if state.entity_id.startswith("select.geozones_") and state.state not in (
-            None,
-            "unknown",
-            "unavailable",
+        if (
+            state.entity_id.startswith("select.geozones_")
+            and state.state not in (None, "unknown", "unavailable")
         ):
             return state.state
     return None
@@ -69,6 +70,105 @@ async def _async_reprocess_all_entries(hass: HomeAssistant) -> None:
         )
         if path:
             async_dispatcher_send(hass, f"{DOMAIN}_reload_{entry.entry_id}")
+
+
+async def _async_ensure_dashboard_config(hass: HomeAssistant) -> None:
+    """Ensure the sidebar dashboard is pre-populated with default cards if not already configured."""
+    store = Store[dict[str, Any]](hass, 1, "lovelace.geozones")
+    existing_config = await store.async_load()
+
+    if existing_config is not None:
+        return
+
+    entities_list: list[dict[str, Any] | str] = []
+
+    for entry in hass.config_entries.async_entries(DOMAIN):
+        source_tracker = entry.data.get(CONF_SOURCE_TRACKER, "")
+        if not source_tracker:
+            continue
+        slug = source_tracker.split(".")[-1]
+
+        entities_list.extend(
+            [
+                {
+                    "entity": f"select.geozones_{slug}_custom_zones",
+                    "name": f"Select Custom Zone ({slug})",
+                },
+                {
+                    "entity": f"button.geozones_{slug}_mark_location",
+                    "name": f"Mark Location ({slug})",
+                },
+                {
+                    "entity": f"button.geozones_{slug}_remove_zone",
+                    "name": f"Remove Selected Zone ({slug})",
+                },
+                {
+                    "entity": f"button.geozones_{slug}_reload",
+                    "name": f"Reload Layer ({slug})",
+                },
+                {"type": "divider"},
+            ]
+        )
+
+    if entities_list and isinstance(entities_list[-1], dict) and entities_list[-1].get("type") == "divider":
+        entities_list.pop()
+
+    if not entities_list:
+        entities_list = ["device_tracker.geozones"]
+
+    markdown_content = (
+        "{% set trackers = states.device_tracker "
+        "| selectattr('entity_id', 'search', '^device_tracker\\\\.geozones_') "
+        "| list %}\n"
+        "{% if trackers | length > 0 %}\n"
+        "  {% for t in trackers %}\n"
+        "    ### 📱 {{ t.name }}\n"
+        "    * **Current Zone:** `{{ t.state }}`\n"
+        "    * **Source Target:** `{{ state_attr(t.entity_id, 'source_entity_id') }}`\n"
+        "    \n"
+        "    **Active inside zones:**\n"
+        "    {% set zones = state_attr(t.entity_id, 'containing_zones') %}\n"
+        "    {% if zones and zones | length > 0 %}\n"
+        "      {% for zone in zones %}- {{ zone }}\n"
+        "      {% endfor %}\n"
+        "    {% else %}\n"
+        "      *Not inside any custom zones.*\n"
+        "    {% endif %}\n"
+        "    {% if not loop.last %}---{% endif %}\n"
+        "  {% endfor %}\n"
+        "{% else %}\n"
+        "  *No active GeoZones trackers detected.*\n"
+        "{% endif %}"
+    )
+
+    default_dashboard = {
+        "config": {
+            "title": "GeoZones",
+            "views": [
+                {
+                    "title": "Overview",
+                    "path": "overview",
+                    "icon": "mdi:map-marker-radius",
+                    "type": "masonry",
+                    "cards": [
+                        {
+                            "type": "markdown",
+                            "title": "📍 Active Tracking Overview",
+                            "content": markdown_content,
+                        },
+                        {
+                            "type": "entities",
+                            "title": "⚙️ Custom Zone Manager",
+                            "show_header_toggle": False,
+                            "entities": entities_list,
+                        },
+                    ],
+                }
+            ],
+        }
+    }
+
+    await store.async_save(default_dashboard)
 
 
 async def async_setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:
@@ -204,8 +304,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     await async_ensure_custom_zones_file(hass)
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
-    # Register central sidebar panel once when any entry is loaded
     if not hass.data[DOMAIN].get("panel_registered"):
+        await _async_ensure_dashboard_config(hass)
         async_register_built_in_panel(
             hass,
             component_name="lovelace",
@@ -253,9 +353,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     if unload_ok:
         remaining_entries = [
-            e
-            for e in hass.config_entries.async_entries(DOMAIN)
-            if e.entry_id != entry.entry_id
+            e for e in hass.config_entries.async_entries(DOMAIN) if e.entry_id != entry.entry_id
         ]
         if not remaining_entries and hass.data[DOMAIN].get("panel_registered"):
             async_remove_panel(hass, "geozones")
