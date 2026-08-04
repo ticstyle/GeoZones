@@ -309,17 +309,23 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
     if not hass.data[DOMAIN].get("panel_registered"):
-        await _async_ensure_dashboard_config(hass)
-        async_register_built_in_panel(
-            hass,
-            component_name="lovelace",
-            sidebar_title="GeoZones",
-            sidebar_icon="mdi:map-marker-path",
-            frontend_url_path="geozones",
-            config={"mode": "storage", "title": "GeoZones"},
-            require_admin=False,
-        )
         hass.data[DOMAIN]["panel_registered"] = True
+        try:
+            await _async_ensure_dashboard_config(hass)
+            async_register_built_in_panel(
+                hass,
+                component_name="lovelace",
+                sidebar_title="GeoZones",
+                sidebar_icon="mdi:map-marker-path",
+                frontend_url_path="geozones",
+                config={"mode": "storage", "title": "GeoZones"},
+                require_admin=False,
+            )
+        except ValueError:
+            _LOGGER.debug("GeoZones panel already registered")
+        except OSError as err:
+            hass.data[DOMAIN]["panel_registered"] = False
+            _LOGGER.error("Failed to register GeoZones panel: %s", err)
 
     async def nightly_refresh_callback(now: datetime) -> None:
         """Automated scheduled update tracking execution pass handle context."""
