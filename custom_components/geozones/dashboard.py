@@ -5,10 +5,12 @@ import logging
 import os
 
 import aiofiles  # type: ignore[import-untyped]
+
 from homeassistant.components.frontend import (
     async_register_built_in_panel,
     async_remove_panel,
 )
+from homeassistant.components.http import StaticPathConfig
 from homeassistant.components.lovelace.dashboard import LovelaceYAML
 from homeassistant.core import HomeAssistant
 
@@ -16,6 +18,7 @@ from .const import CONF_SOURCE_TRACKER, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 DASHBOARD_REL_PATH = "custom_components/geozones/geozones_dashboard.yaml"
+LOCAL_LOGO_URL = "/geozones_static/logo.png"
 
 
 async def async_generate_dashboard_yaml(hass: HomeAssistant) -> str:
@@ -28,25 +31,37 @@ async def async_generate_dashboard_yaml(hass: HomeAssistant) -> str:
 
     if entries:
         first_entry = entries[0]
-        source_tracker = first_entry.data.get(CONF_SOURCE_TRACKER, "")
-        if source_tracker:
+        first_tracker = first_entry.data.get(CONF_SOURCE_TRACKER, "")
+
+        if first_tracker:
+            first_slug = first_tracker.split(".")[-1]
+            entities_yaml_lines.append(
+                f"          - entity: select.geozones_{first_slug}_custom_zones\n"
+                "            name: Select Custom Zone"
+            )
+            entities_yaml_lines.append("          - type: divider")
+
+        for entry in entries:
+            source_tracker = entry.data.get(CONF_SOURCE_TRACKER, "")
+            if not source_tracker:
+                continue
             slug = source_tracker.split(".")[-1]
+            entities_yaml_lines.append(
+                f"          - entity: button.geozones_{slug}_mark_location\n"
+                f"            name: Mark Current Location for {slug}"
+            )
+
+        if first_tracker:
+            first_slug = first_tracker.split(".")[-1]
             entities_yaml_lines.extend(
                 [
+                    "          - type: divider",
                     (
-                        f"          - entity: select.geozones_{slug}_custom_zones\n"
-                        "            name: Select Custom Zone"
-                    ),
-                    (
-                        f"          - entity: button.geozones_{slug}_mark_location\n"
-                        "            name: Mark Current Location"
-                    ),
-                    (
-                        f"          - entity: button.geozones_{slug}_remove_zone\n"
+                        f"          - entity: button.geozones_{first_slug}_remove_zone\n"
                         "            name: Remove Selected Zone"
                     ),
                     (
-                        f"          - entity: button.geozones_{slug}_reload\n"
+                        f"          - entity: button.geozones_{first_slug}_reload\n"
                         "            name: Reload Layer"
                     ),
                 ]
@@ -59,14 +74,18 @@ async def async_generate_dashboard_yaml(hass: HomeAssistant) -> str:
 
     yaml_content = f"""title: GeoZones
 views:
-  - title: GeoZones
-    path: geozones-overview
+  - title: Overview
+    path: overview
     icon: mdi:map-marker-radius
     type: masonry
     cards:
       - type: markdown
         title: "📍 Active Tracking Overview"
         content: |
+          <div align="center" style="margin-bottom: 16px;">
+            <img src="{LOCAL_LOGO_URL}" width="130" alt="GeoZones Logo">
+          </div>
+
           {{%- set trackers = states.device_tracker | selectattr('entity_id', 'search', '^device_tracker\\\\.geozones_') | list -%}}
           {{%- if trackers | length > 0 -%}}
           {{%- for t in trackers %}}
@@ -127,6 +146,18 @@ views:
 
 async def async_setup_dashboard(hass: HomeAssistant) -> None:
     """Set up and register the GeoZones sidebar panel dashboard."""
+    brand_dir = hass.config.path("custom_components/geozones/brand")
+    if os.path.exists(brand_dir):
+        await hass.http.async_register_static_paths(
+            [
+                StaticPathConfig(
+                    url_path="/geozones_static",
+                    path=brand_dir,
+                    cache_headers=True,
+                )
+            ]
+        )
+
     rel_path = await async_generate_dashboard_yaml(hass)
 
     if "lovelace" in hass.data and hasattr(hass.data["lovelace"], "dashboards"):
