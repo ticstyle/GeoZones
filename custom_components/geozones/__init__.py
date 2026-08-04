@@ -1,17 +1,19 @@
 # custom_components/geozones/__init__.py
 """The GeoZones Component initialization runtime orchestration module."""
 
+from datetime import datetime
 import logging
 import os
-from datetime import datetime
 from typing import Any
 
 import aiofiles  # type: ignore[import-untyped]
 import voluptuous as vol
+
 from homeassistant.components.frontend import (
     async_register_built_in_panel,
     async_remove_panel,
 )
+from homeassistant.components.lovelace.dashboard import LovelaceYAML
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant, ServiceCall
@@ -50,10 +52,9 @@ DASHBOARD_REL_PATH = "custom_components/geozones/geozones_dashboard.yaml"
 def _get_active_select_zone_name(hass: HomeAssistant) -> str | None:
     """Extract selected zone name from any registered GeoZones select entity."""
     for state in hass.states.async_all("select"):
-        if state.entity_id.startswith("select.geozones_") and state.state not in (
-            None,
-            "unknown",
-            "unavailable",
+        if (
+            state.entity_id.startswith("select.geozones_")
+            and state.state not in (None, "unknown", "unavailable")
         ):
             return state.state
     return None
@@ -300,6 +301,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         hass.data[DOMAIN]["panel_registered"] = True
         try:
             rel_path = await _async_generate_dashboard_yaml(hass)
+
+            # Register with Lovelace backend dashboard manager
+            if "lovelace" in hass.data and hasattr(hass.data["lovelace"], "dashboards"):
+                hass.data["lovelace"].dashboards["geozones"] = LovelaceYAML(
+                    hass, "geozones", {"mode": "yaml", "filename": rel_path}
+                )
+
+            # Register panel in sidebar frontend
             async_register_built_in_panel(
                 hass,
                 component_name="lovelace",
@@ -310,7 +319,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                     "mode": "yaml",
                     "title": "GeoZones",
                     "icon": "mdi:map-marker-path",
-                    "filename": rel_path,
                 },
                 require_admin=False,
             )
@@ -362,6 +370,8 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         ]
         if not remaining_entries and hass.data[DOMAIN].get("panel_registered"):
             async_remove_panel(hass, "geozones")
+            if "lovelace" in hass.data and hasattr(hass.data["lovelace"], "dashboards"):
+                hass.data["lovelace"].dashboards.pop("geozones", None)
             hass.data[DOMAIN]["panel_registered"] = False
 
     return unload_ok
@@ -371,3 +381,4 @@ async def async_reload_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
     """Force a complete thread-safe reload cycle sequence when settings are adjusted."""
     _LOGGER.info("Reconfiguration detected. Reloading GeoZones instance")
     await hass.config_entries.async_reload(entry.entry_id)
+    
