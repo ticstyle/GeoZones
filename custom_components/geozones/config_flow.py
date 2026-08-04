@@ -6,6 +6,7 @@ import os
 from typing import Any
 
 import voluptuous as vol
+
 from homeassistant import config_entries
 from homeassistant.config_entries import ConfigEntry, ConfigFlowResult
 from homeassistant.core import callback
@@ -25,11 +26,13 @@ from .const import (
     CONF_HOME_SSIDS,
     CONF_HOME_ZONE,
     CONF_MAX_GPS_ACCURACY,
+    CONF_SHOW_IN_SIDEBAR,
     CONF_SOURCE_TRACKER,
     CONF_USE_CUSTOM_ZONES,
     CONF_WIFI_SSID_SENSOR,
     CUSTOM_ZONES_FILENAME,
     DEFAULT_HOME_ZONE,
+    DEFAULT_SHOW_IN_SIDEBAR,
     DEFAULT_USE_CUSTOM_ZONES,
     DOMAIN,
 )
@@ -193,6 +196,9 @@ class GeoZonesConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     CONF_USE_CUSTOM_ZONES: user_input.get(
                         CONF_USE_CUSTOM_ZONES, DEFAULT_USE_CUSTOM_ZONES
                     ),
+                    CONF_SHOW_IN_SIDEBAR: user_input.get(
+                        CONF_SHOW_IN_SIDEBAR, DEFAULT_SHOW_IN_SIDEBAR
+                    ),
                 },
             )
 
@@ -207,9 +213,9 @@ class GeoZonesConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         }
 
         if suggested_wifi:
-            schema_dict[vol.Optional(CONF_WIFI_SSID_SENSOR, default=suggested_wifi)] = (
-                EntitySelector(EntitySelectorConfig(domain="sensor"))
-            )
+            schema_dict[
+                vol.Optional(CONF_WIFI_SSID_SENSOR, default=suggested_wifi)
+            ] = EntitySelector(EntitySelectorConfig(domain="sensor"))
         else:
             schema_dict[vol.Optional(CONF_WIFI_SSID_SENSOR)] = EntitySelector(
                 EntitySelectorConfig(domain="sensor")
@@ -225,6 +231,10 @@ class GeoZonesConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         schema_dict[
             vol.Optional(CONF_USE_CUSTOM_ZONES, default=DEFAULT_USE_CUSTOM_ZONES)
+        ] = BooleanSelector()
+
+        schema_dict[
+            vol.Optional(CONF_SHOW_IN_SIDEBAR, default=DEFAULT_SHOW_IN_SIDEBAR)
         ] = BooleanSelector()
 
         return self.async_show_form(
@@ -252,6 +262,9 @@ class GeoZonesConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 use_custom = user_input.get(
                     CONF_USE_CUSTOM_ZONES, DEFAULT_USE_CUSTOM_ZONES
                 )
+                show_sidebar = user_input.get(
+                    CONF_SHOW_IN_SIDEBAR, DEFAULT_SHOW_IN_SIDEBAR
+                )
                 processed_path = await fetch_and_process_geojson(
                     self.hass, geojson_source, entity_id_slug, use_custom
                 )
@@ -273,6 +286,7 @@ class GeoZonesConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                             CONF_HOME_SSIDS: user_input.get(CONF_HOME_SSIDS, []),
                             CONF_HOME_ZONE: DEFAULT_HOME_ZONE,
                             CONF_USE_CUSTOM_ZONES: use_custom,
+                            CONF_SHOW_IN_SIDEBAR: show_sidebar,
                         },
                     )
 
@@ -293,6 +307,9 @@ class GeoZonesConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         current_use_custom = config_entry.data.get(
             CONF_USE_CUSTOM_ZONES, DEFAULT_USE_CUSTOM_ZONES
         )
+        current_show_sidebar = config_entry.data.get(
+            CONF_SHOW_IN_SIDEBAR, DEFAULT_SHOW_IN_SIDEBAR
+        )
 
         schema_dict: dict[Any, Any] = {
             vol.Required(CONF_SOURCE_TRACKER, default=current_tracker): EntitySelector(
@@ -309,9 +326,9 @@ class GeoZonesConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         )
 
         if suggested_wifi:
-            schema_dict[vol.Optional(CONF_WIFI_SSID_SENSOR, default=suggested_wifi)] = (
-                EntitySelector(EntitySelectorConfig(domain="sensor"))
-            )
+            schema_dict[
+                vol.Optional(CONF_WIFI_SSID_SENSOR, default=suggested_wifi)
+            ] = EntitySelector(EntitySelectorConfig(domain="sensor"))
         else:
             schema_dict[vol.Optional(CONF_WIFI_SSID_SENSOR)] = EntitySelector(
                 EntitySelectorConfig(domain="sensor")
@@ -327,9 +344,13 @@ class GeoZonesConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             )
         )
 
-        schema_dict[vol.Optional(CONF_USE_CUSTOM_ZONES, default=current_use_custom)] = (
-            BooleanSelector()
-        )
+        schema_dict[
+            vol.Optional(CONF_USE_CUSTOM_ZONES, default=current_use_custom)
+        ] = BooleanSelector()
+
+        schema_dict[
+            vol.Optional(CONF_SHOW_IN_SIDEBAR, default=current_show_sidebar)
+        ] = BooleanSelector()
 
         return self.async_show_form(
             step_id="reconfigure",
@@ -427,6 +448,9 @@ class GeoZonesOptionsFlowHandler(config_entries.OptionsFlow):
                 use_custom = user_input.get(
                     CONF_USE_CUSTOM_ZONES, DEFAULT_USE_CUSTOM_ZONES
                 )
+                show_sidebar = user_input.get(
+                    CONF_SHOW_IN_SIDEBAR, DEFAULT_SHOW_IN_SIDEBAR
+                )
                 processed_path = await fetch_and_process_geojson(
                     self.hass, geojson_source, entity_id_slug, use_custom
                 )
@@ -448,6 +472,7 @@ class GeoZonesOptionsFlowHandler(config_entries.OptionsFlow):
                             CONF_HOME_SSIDS: user_input.get(CONF_HOME_SSIDS, []),
                             CONF_HOME_ZONE: DEFAULT_HOME_ZONE,
                             CONF_USE_CUSTOM_ZONES: use_custom,
+                            CONF_SHOW_IN_SIDEBAR: show_sidebar,
                         },
                     )
                     return self.async_create_entry(title="", data={})
@@ -469,6 +494,9 @@ class GeoZonesOptionsFlowHandler(config_entries.OptionsFlow):
         current_use_custom = self.config_entry.data.get(
             CONF_USE_CUSTOM_ZONES, DEFAULT_USE_CUSTOM_ZONES
         )
+        current_show_sidebar = self.config_entry.data.get(
+            CONF_SHOW_IN_SIDEBAR, DEFAULT_SHOW_IN_SIDEBAR
+        )
 
         schema_dict: dict[Any, Any] = {
             vol.Required(CONF_SOURCE_TRACKER, default=current_tracker): EntitySelector(
@@ -485,9 +513,9 @@ class GeoZonesOptionsFlowHandler(config_entries.OptionsFlow):
         )
 
         if suggested_wifi:
-            schema_dict[vol.Optional(CONF_WIFI_SSID_SENSOR, default=suggested_wifi)] = (
-                EntitySelector(EntitySelectorConfig(domain="sensor"))
-            )
+            schema_dict[
+                vol.Optional(CONF_WIFI_SSID_SENSOR, default=suggested_wifi)
+            ] = EntitySelector(EntitySelectorConfig(domain="sensor"))
         else:
             schema_dict[vol.Optional(CONF_WIFI_SSID_SENSOR)] = EntitySelector(
                 EntitySelectorConfig(domain="sensor")
@@ -503,9 +531,13 @@ class GeoZonesOptionsFlowHandler(config_entries.OptionsFlow):
             )
         )
 
-        schema_dict[vol.Optional(CONF_USE_CUSTOM_ZONES, default=current_use_custom)] = (
-            BooleanSelector()
-        )
+        schema_dict[
+            vol.Optional(CONF_USE_CUSTOM_ZONES, default=current_use_custom)
+        ] = BooleanSelector()
+
+        schema_dict[
+            vol.Optional(CONF_SHOW_IN_SIDEBAR, default=current_show_sidebar)
+        ] = BooleanSelector()
 
         return self.async_show_form(
             step_id="init",
