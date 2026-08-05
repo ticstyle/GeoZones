@@ -3,17 +3,13 @@ name: CI/CD Pipeline
 on:
   push:
     branches:
-      - main
-      - dev
+      - "**"
   pull_request:
     branches:
       - main
-      - dev
-  schedule:
-    - cron: "0 0 * * *"  # Runs nightly check
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.head_ref || github.ref_name }}
   cancel-in-progress: true
 
 permissions:
@@ -30,29 +26,30 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v7
         with:
-          token: ${{ secrets.MY_WORKFLOW_SECRET }}  # Uses PAT to allow recursive test triggers
+          token: ${{ secrets.MY_WORKFLOW_SECRET }}
           ref: ${{ github.head_ref || github.ref }}
           fetch-depth: 0
 
       - name: Copy strings.json to translations/en.json
         run: |
-          cp custom_components/geozones/strings.json custom_components/geozones/translations/en.json
+          mkdir -p custom_components/*/translations
+          cp custom_components/*/strings.json custom_components/*/translations/en.json
 
       - name: Run Ruff Check
         uses: astral-sh/ruff-action@v3
         with:
-          args: "check --fix custom_components/geozones"
+          args: "check --fix custom_components"
 
       - name: Run Ruff Format
         uses: astral-sh/ruff-action@v3
         with:
-          args: "format custom_components/geozones"
+          args: "format custom_components"
 
       - name: Commit & Push changes if needed
         uses: stefanzweifel/git-auto-commit-action@v7
         with:
           commit_message: "chore: sync translations and auto-format with Ruff"
-          file_pattern: "custom_components/geozones/translations/en.json custom_components/geozones/**"
+          file_pattern: "custom_components/*/translations/en.json custom_components/**"
 
   # ==========================================
   # JOB 2: Parallel Validation Check Suites
@@ -114,7 +111,7 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run Mypy
-        run: mypy custom_components/geozones
+        run: mypy custom_components
 
   # ==========================================
   # JOB 3: Autopublish GitHub Releases
@@ -122,8 +119,7 @@ jobs:
   release:
     name: Create GitHub Release
     needs: [hassfest, hacs, mypy]
-    # Safety Gate: Only allow releases to run on push events to main or dev branches
-    if: github.event_name == 'push' && (github.ref_name == 'main' || github.ref_name == 'dev')
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -131,28 +127,33 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Extract version from manifest.json
+      - name: Extract version and determine release type
         id: get_version
         run: |
-          VERSION=$(jq -r '.version' custom_components/geozones/manifest.json)
-          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
-          echo "Detected version: v$VERSION"
-          
-          # Match alpha, beta, or rc tags within the manifest string
-          if [[ "$VERSION" =~ alpha|beta|rc ]]; then
-            echo "IS_PRERELEASE=true" >> $GITHUB_OUTPUT
-            echo "Pre-release variation detected. Flagging build."
-          else
-            echo "IS_PRERELEASE=false" >> $GITHUB_OUTPUT
-            echo "Production-stable variation detected."
-          fi
-          
-          # Safety Gate: Only allow pre-releases when on the dev branch
+          VERSION=$(jq -r '.version' custom_components/*/manifest.json)
           BRANCH="${{ github.ref_name }}"
-          if [[ "$BRANCH" == "dev" && ! "$VERSION" =~ alpha|beta|rc ]]; then
-            echo "SHOULD_RELEASE=false" >> $GITHUB_OUTPUT
-            echo "Stable version found on dev branch. Skipping release."
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "Evaluating release for v$VERSION on branch '$BRANCH'"
+
+          IS_TAG_PRERELEASE=false
+          if [[ "$VERSION" =~ alpha|beta|rc|dev ]]; then
+            IS_TAG_PRERELEASE=true
+          fi
+
+          if [[ "$BRANCH" != "main" ]]; then
+            # Non-main branches are ALWAYS pre-releases
+            echo "IS_PRERELEASE=true" >> $GITHUB_OUTPUT
+            
+            # Block release if a non-main branch tries to publish a stable version number without a pre-release tag
+            if [[ "$IS_TAG_PRERELEASE" == "false" ]]; then
+              echo "SHOULD_RELEASE=false" >> $GITHUB_OUTPUT
+              echo "Stable version number found on non-main branch '$BRANCH'. Skipping release to prevent accidental production publishing."
+            else
+              echo "SHOULD_RELEASE=true" >> $GITHUB_OUTPUT
+            fi
           else
+            # Main branch uses the manifest tag to determine pre-release vs stable
+            echo "IS_PRERELEASE=$IS_TAG_PRERELEASE" >> $GITHUB_OUTPUT
             echo "SHOULD_RELEASE=true" >> $GITHUB_OUTPUT
           fi
 
@@ -173,8 +174,7 @@ jobs:
         with:
           tag_name: v${{ steps.get_version.outputs.VERSION }}
           name: v${{ steps.get_version.outputs.VERSION }}
-          target_commitish: ${{ github.sha }}  # Pin the tag/release to the exact commit SHA that triggered this run
+          target_commitish: ${{ github.sha }}
           generate_release_notes: true
           draft: false
           prerelease: ${{ steps.get_version.outputs.IS_PRERELEASE == 'true' }}
-          
